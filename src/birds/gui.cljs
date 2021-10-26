@@ -76,7 +76,8 @@
   [:div {:class :controls}
    [int-input :num-of-birds "Number of birds: "
     (fn [new-settings]
-      (doseq [bird (:birds new-settings)] (events/kill! bird))
+      (doseq [bird (:birds new-settings)]
+        (events/kill! bird))
       (generate-birds! settings))]
    [int-input :volume "Bird volume"]
    [int-input :audio-sensitivity "how far birds can hear"]

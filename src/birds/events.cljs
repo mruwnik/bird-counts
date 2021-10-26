@@ -8,26 +8,29 @@
 (def event-chan (async/chan))
 (def broadcast-chan (async/mult event-chan))
 
-(defn publish [chan msg] (async/go (async/>! chan msg)))
-(defn publish-after [chan ms msg]
+(defn publish
+  ([msg] (publish event-chan msg))
+  ([chan msg] (async/put! chan msg)))
+
+(defn publish-after [ms msg]
   (async/go
     (async/<! (async/timeout ms))
-    (async/>! chan msg)))
+    (async/>! event-chan msg)))
 
 (defn kill! [{:keys [state chan]}] (publish chan {:event-type :die :bird-id (:id @state)}))
 
-(defn start-singing [{:keys [state chan] :as bird}]
+(defn start-singing [{:keys [state] :as bird}]
   ;; only start singing if more than `sing-rest-time`s have past since last sung
-  (publish event-chan (-> @state
-                          (select-keys [:pos :volume :song-length])
-                          (assoc :event-type :start-singing
+  (publish (-> @state
+               (select-keys [:pos :volume :song-length])
+               (assoc :event-type :start-singing
                                  :bird-id (:id @state))))
   (bird/sing! bird)
-  (publish-after chan (:song-length @state)
+  (publish-after (:song-length @state)
                  {:event-type :stop-singing
                   :bird-id (:id @state)}))
 
-(defn handle-event [{:keys [state chan] :as bird} {event-type :event-type :as event}]
+(defn handle-event [{:keys [state] :as bird} {event-type :event-type :as event}]
   (condp = event-type
     nil (when (and (rand-happens? (:spontaneous-sing-prob @state))
                    (bird/can-sing? bird))
@@ -40,7 +43,7 @@
                               (bird/hears? bird event)
                               (bird/can-sing? bird)
                               (rand-happens? (:motivated-sing-prob @state)))
-                     (publish-after chan (:motivated-sing-after @state) {:event-type :re-sing :bird-id (:id @state)}))
+                     (publish-after (:motivated-sing-after @state) {:event-type :re-sing :bird-id (:id @state)}))
     :re-sing (when (and (same-bird? bird event)
                         (bird/can-sing? bird))
                (swap! state assoc :resinging true)
@@ -51,11 +54,10 @@
 
 (defn bird-runner [bird]
   (async/go-loop []
-    (let [[{:keys [event-type bird-id] :as event} ch] (async/alts! [(:chan bird) (async/timeout 100)])]
+    (let [[{:keys [event-type] :as event} _] (async/alts! [(:chan bird) (async/timeout 100)])]
       (handle-event bird event)
-      (when (and (= bird-id (-> bird :state deref :id)) (= event-type :die))
-        (prn "dying"))
-      (when-not (and (= bird-id (-> bird :state deref :id)) (= event-type :die))
+      (if (and (same-bird? bird event) (= event-type :die))
+        (async/untap broadcast-chan (:chan bird))
         (recur)))))
 
 (defn random-bird [chan settings id]
