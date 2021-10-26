@@ -34,7 +34,7 @@
 (defn num-input
   ([key desc] (num-input key desc #(js/parseInt % 10) (partial forest/bird-updater key)))
   ([key desc parser func]
-   [(keyword (str "div." (name key)))
+   [:div {:class [:setting-input key]}
     desc
     [:input {:type "number"
              :value (key @settings)
@@ -46,7 +46,7 @@
 
 (defn prob-input
   [key desc]
-  [(keyword (str "div." (name key)))
+  [:div {:class [:setting-input key]}
    desc
    [:input {:type "number"
             :min "0"
@@ -57,7 +57,7 @@
 
 (defn ms-input
   [key desc]
-  [(keyword (str "div." (name key)))
+  [:div {:class [:setting-input key]}
    desc
    [:input {:type "number"
             :min "0"
@@ -66,7 +66,7 @@
             :on-change #(forest/bird-updater key (swap! settings assoc key (-> % .-target .-value js/parseFloat)))}]])
 
 (defn checkbox [key desc]
-  [(keyword (str "div." (name key)))
+  [:div {:class [:setting-input key]}
    desc
    [:input {:type "checkbox"
             :checked (key @settings)

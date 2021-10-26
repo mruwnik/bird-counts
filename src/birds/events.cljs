@@ -43,9 +43,10 @@
                               (bird/hears? bird event)
                               (bird/can-sing? bird)
                               (rand-happens? (:motivated-sing-prob @state)))
-                     (publish-after (:motivated-sing-after @state) {:event-type :re-sing :bird-id (:id @state)}))
+                     (publish-after (:motivated-sing-after @state) {:event-type :re-sing :bla (rand-int 10000) :bird-id (:id @state)}))
     :re-sing (when (and (same-bird? bird event)
                         (bird/can-sing? bird))
+               (prn event)
                (swap! state assoc :resinging true)
                (start-singing bird))
 

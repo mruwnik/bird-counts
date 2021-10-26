@@ -11,3 +11,12 @@
     border: 1px solid rgba(0, 0, 0, 0.8);
     padding: 20px;
 }
+
+.setting-input {
+    width: 100%;
+    padding: 10px 10px;
+}
+.setting-input input {
+    width: 60px;
+    float: right;
+}
