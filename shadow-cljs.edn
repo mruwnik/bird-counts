@@ -1,0 +1,13 @@
+{:source-paths
+ ["src"
+  "test"]
+
+ :dependencies [[quil "3.1.0"]
+                [reagent "0.10.0"]]
+
+ :dev-http {8080 "public"}
+
+ :builds
+ {:frontend
+  {:target :browser
+   :modules {:main {:init-fn birds.core/init}}}}}

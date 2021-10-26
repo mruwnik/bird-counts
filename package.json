@@ -1,0 +1,13 @@
+{
+  "name": "bird",
+  "version": "0.0.1",
+  "private": true,
+  "devDependencies": {
+    "shadow-cljs": "^2.15.12"
+  },
+  "dependencies": {
+    "p5": "^1.4.0",
+    "react": "16.13.0",
+    "react-dom": "16.13.0"
+  }
+}
