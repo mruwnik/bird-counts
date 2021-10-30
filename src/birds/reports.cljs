@@ -7,12 +7,9 @@
 (defonce tick-count (r/atom 0))
 (defonce ticker (js/setInterval #(swap! tick-count inc) 1000))
 
-(defn handle-event [event]
-  (when (= (:event-type event) :die)
-    (prn "die"))
-  (when (= (:event-type event) :re-sing)
-    (prn event))
-  (swap! song-stats update (:event-type event) inc))
+(defn handle-event [{:keys [event-type motivated-singing]}]
+  (if (= event-type :start-singing)
+    (swap! song-stats update (if motivated-singing :motivated-singing :spontaneous-singing) inc)))
 
 (defn init! [settings]
   (swap! song-stats assoc :listener (events/attach-listener handle-event)))
@@ -24,9 +21,9 @@
      ;; tick
      [:input {:type :hidden :value tick}]
      (doall
-      (for [[key desc] [[:start-singing "spontaneous sung"]
+      (for [[key desc] [[:spontaneous-singing "spontaneous sung"]
                         ;; [:stop-singing "stopped singing"]
-                        [:re-sing "motivated sung"]]]
+                        [:motivated-singing "motivated sung"]]]
         [:div {:class :stat :key key}
          [:span {:class :desc} desc]
          [:span {:class :amount} (key @song-stats)]]))]))

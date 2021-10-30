@@ -1,10 +1,10 @@
 (ns birds.bird
-  (:require [quil.core :as q]))
+  (:require [quil.core :as q]
+            [birds.time :as time]))
 
 (defn dist-2d [p1 p2]
   (Math/sqrt (+ (Math/pow (- (:x p1) (:x p2)) 2)
                 (Math/pow (- (:y p1) (:y p2)) 2))))
-(defn now [] (.getTime (js/Date.)))
 
 (defprotocol Bird
   (move! [bird x y])
@@ -34,16 +34,15 @@
        (dist-2d (:pos @state) (:pos event))))
 
   Singer
-  (sing! [_] (swap! state assoc :singing-time (now)))
-  (stop-singing! [_] (swap! state dissoc :resinging))
+  (sing! [_] (swap! state assoc
+                    :singing-time (time/now)
+                    :singing? true))
+  (stop-singing! [_] (swap! state dissoc :singing? :resinging))
   (can-sing? [_]
     (let [{:keys [singing-time sing-rest-time]} @state]
       (or (not singing-time)
-          (> (- (now) singing-time) sing-rest-time))))
-  (singing? [_]
-    (let [{:keys [singing-time song-length]} @state]
-      (and singing-time
-          (< (- (now) singing-time) song-length))))
+          (> (- (time/now) singing-time) sing-rest-time))))
+  (singing? [_] (:singing? @state))
 
   Draw-bird
   (draw-song! [_] (draw-circle! (:pos @state) (:volume @state) (or (:song-colour @state) [0 0 255])))
