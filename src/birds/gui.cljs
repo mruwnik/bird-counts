@@ -73,6 +73,7 @@
             :checked (key @settings)
             :on-change #(forest/bird-updater key (swap! settings assoc key (-> % .-target .-checked)))}]])
 
+
 (defn controls []
   [:div {:class :controls}
    [int-input :num-of-birds "Number of birds: " (fn [new-settings] (generate-birds! new-settings))]

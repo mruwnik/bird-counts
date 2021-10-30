@@ -9,27 +9,28 @@
 (def birds (atom []))
 (def listeners (atom []))
 
-(defn start-singing [{:keys [state] :as bird}]
-  (bird/sing! bird)
+(defn base-event [{:keys [state]} type]
   (-> @state
       (select-keys [:pos :volume :song-length])
-      (assoc :event-type :start-singing
-             :duration 0
-             :bird-id (:id @state))))
+      (assoc :bird-id (:id @state)
+             :event-type type)))
 
-(defn stop-singing [{:keys [state] :as bird}]
+(defn start-singing [bird]
+  (bird/sing! bird)
+  (assoc (base-event bird :start-singing) :duration 0))
+
+(defn stop-singing [bird]
   (bird/stop-singing! bird)
-  {:event-type :stop-singing :bird-id (:id @state)})
+  (base-event bird :stop-singing))
 
-(defn resing [{:keys [state]}]
-  {:event-type :re-sing
-   :motivated-sing-in (:motivated-sing-after @state)
-   :bird-id (:id @state)})
+(defn resing [{:keys [state] :as bird}]
+  (assoc (base-event bird :re-sing)
+         :motivated-sing-in (:motivated-sing-after @state)))
 
-(defn handle-same-bird [{:keys [state] :as bird} {event-type :event-type :as event}]
+(defn handle-same-bird [{:keys [state] :as bird} {:keys [event-type duration song-length] :as event}]
   (condp = event-type
-    :singing (if (> (:duration event) (:song-length event))
-               (stop-singing bird)
+    :singing (if (> duration song-length)
+               (assoc (stop-singing bird) :duration duration)
                (update event :duration inc))
 
     :start-singing (-> event
