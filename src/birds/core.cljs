@@ -16,7 +16,7 @@
   (mount-root)
   (re-frame/dispatch-sync [::events/initialize-gui])
   (re-frame/dispatch-sync [::events/initialize-reports])
-  ;; (re-frame/dispatch-sync [::events/intitialise-observers-watch])
+  (re-frame/dispatch-sync [::events/intitialise-observers-watch])
   (re-frame/dispatch-sync [::events/start-bird-loop])
   (re-frame/dispatch-sync [::events/generate-birds])
   (re-frame/dispatch-sync [::events/start-render-forest]))

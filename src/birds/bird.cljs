@@ -2,7 +2,7 @@
   (:require [birds.actors :as actors]
             [birds.time :as time]))
 
-(defrecord Bird [pos
+(defrecord Bird [pos id
                  volume audio-sensitivity
                  singing-time sing-rest-time
                  singing? resinging?
@@ -10,9 +10,14 @@
   actors/Actor
   (move-to! [bird x y] (assoc bird :pos {:x x :y y}))
   (move-by! [_ [x y]])
+
+  actors/Listener
   (hears? [{:keys [audio-sensitivity volume pos]} event]
     (> (+ audio-sensitivity volume)
        (actors/dist-2d pos (:pos event))))
+  (notice [bird event])
+  (start-listening [_])
+  (stop-listening [_])
 
   actors/Singer
   (sing! [bird] (assoc bird :singing-time (time/now)

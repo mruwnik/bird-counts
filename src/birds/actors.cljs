@@ -12,15 +12,20 @@
 
 (defprotocol Actor
   (move-to! [_ x y])
-  (move-by! [_ [x y]])
-  (hears? [bird event]))
+  (move-by! [_ [x y]]))
+
+(defprotocol Listener
+  (hears? [_ event])
+  (notice [_ event])
+  (start-listening [_])
+  (stop-listening [_]))
 
 (defprotocol Singer
-  (sing! [bird])
-  (resing! [bird])
-  (stop-singing! [bird])
-  (can-sing? [bird])
-  (singing? [bird]))
+  (sing! [_])
+  (resing! [_])
+  (stop-singing! [_])
+  (can-sing? [_])
+  (singing? [_]))
 
 (defprotocol Draw-actor
   (draw-actor! [actor])

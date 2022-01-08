@@ -3,6 +3,7 @@
             [quil.middleware :as m]
             [re-frame.core :as re-frame]
             [birds.views.subs :as subs]
+            [birds.views.events :as events]
             [birds.actors :as actors]))
 
 (defn setup [settings]
@@ -19,22 +20,21 @@
 (defn clicked-observer [observers]
   (when (q/mouse-pressed?)
     (->> observers
-         (sort-by (comp :id deref :state))
-         (filter (fn [o]
-                   (let [{:keys [observer-radius pos]} @(:state o)]
-                     (> observer-radius (actors/dist-2d pos (current-mouse-pos))))))
+         (sort-by :id)
+         (filter (fn [{:keys [observer-radius pos]}]
+                     (> observer-radius (actors/dist-2d pos (current-mouse-pos)))))
          first)))
 
 (defn handle-mouse [state]
  (let [prev-selected (:currently-selected state)
-        currently-selected (if (and (q/mouse-pressed?) prev-selected)
-                             prev-selected
-                             (clicked-observer @(re-frame/subscribe [::subs/observers])))
-        prev-pos (:current-pos state)
-        current-pos (current-mouse-pos)]
+       currently-selected (if (and (q/mouse-pressed?) prev-selected)
+                            prev-selected
+                            (clicked-observer @(re-frame/subscribe [::subs/observers])))
+       prev-pos (:current-pos state)
+       current-pos (current-mouse-pos)]
 
     (when (some-> prev-selected (= currently-selected))
-      (actors/move-by! currently-selected (delta-pos prev-pos current-pos)))
+      (re-frame/dispatch [::events/move-observer-by currently-selected (delta-pos prev-pos current-pos)]))
 
     (assoc state
            :prev-selected prev-selected
