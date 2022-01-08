@@ -1,6 +1,7 @@
 (ns birds.forest
   (:require [quil.core :as q :include-macros true]
             [quil.middleware :as m]
+            [birds.actors :as actors]
             [birds.bird :as bird]))
 
 (defn setup [settings]
@@ -28,12 +29,12 @@
 
   (when (:show-bird-hear? state)
     (doseq [bird (:birds state)]
-      (bird/draw-hearing! bird)))
-  (doseq [bird (->> state :birds (filter bird/singing?))]
-    (bird/draw-song! bird))
+      (actors/draw-hearing! bird)))
+  (doseq [bird (->> state :birds (filter actors/singing?))]
+    (actors/draw-song! bird))
   (when (:show-birds? state)
     (doseq [bird (:birds state)]
-      (bird/draw-bird! bird))))
+      (actors/draw-actor! bird))))
 
 (defn bird-updater [key settings]
   (doseq [bird (:birds settings)]

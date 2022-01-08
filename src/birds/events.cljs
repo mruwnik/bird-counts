@@ -1,5 +1,6 @@
 (ns birds.events
-  (:require [birds.bird :as bird]
+  (:require [birds.actors :as actors]
+            [birds.bird :as bird]
             [birds.time :as time]
             [cljs.core.async :as async]))
 
@@ -16,11 +17,11 @@
              :event-type type)))
 
 (defn start-singing [bird]
-  (bird/sing! bird)
+  (actors/sing! bird)
   (assoc (base-event bird :start-singing) :duration 0))
 
 (defn stop-singing [bird]
-  (bird/stop-singing! bird)
+  (actors/stop-singing! bird)
   (base-event bird :stop-singing))
 
 (defn resing [{:keys [state] :as bird}]
@@ -40,7 +41,7 @@
                (> (:motivated-sing-in event) 0)
                (update event :motivated-sing-in dec)
 
-               (bird/can-sing? bird)
+               (actors/can-sing? bird)
                (do
                  (swap! state assoc :resinging true)
                  (assoc (start-singing bird) :motivated-singing true)))
@@ -49,11 +50,11 @@
 (defn handle-other-bird [{:keys [state] :as bird} {event-type :event-type :as event}]
   (condp = event-type
     nil (when (and (rand-happens? (:spontaneous-sing-prob @state))
-                   (bird/can-sing? bird))
+                   (actors/can-sing? bird))
           (start-singing bird))
 
-    :start-singing (when (and (bird/hears? bird event)
-                              (bird/can-sing? bird)
+    :start-singing (when (and (actors/hears? bird event)
+                              (actors/can-sing? bird)
                               (rand-happens? (:motivated-sing-prob @state)))
                      (resing bird))
     nil))
