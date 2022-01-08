@@ -1,17 +1,21 @@
 (ns birds.core
   (:require [reagent.dom :as rdom]
-            [birds.events :as events]
-            [birds.gui :as gui]
-            [birds.reports :as reports]
-            [birds.forest :as forest]))
+            [re-frame.core :as re-frame]
+            [birds.views.views :as views]
+            [birds.views.events :as events]
+            ))
+
+(defn ^:dev/after-load mount-root []
+  (re-frame/clear-subscription-cache!)
+  (let [root-el (.getElementById js/document "controls")]
+    (rdom/unmount-component-at-node root-el)
+    (rdom/render [views/render-view] root-el)))
 
 (defn ^:export init []
-  (rdom/render [:div
-                (gui/controls)
-                [:hr]
-                (reports/show gui/settings)]
-               (js/document.getElementById "controls"))
-  (events/bird-loop)
-  (reports/init! gui/settings)
-  (gui/initialise!)
-  (forest/start-rendering gui/settings))
+  (re-frame/dispatch-sync [::events/initialize-db])
+  (mount-root)
+  (re-frame/dispatch-sync [::events/initialize-gui])
+  (re-frame/dispatch-sync [::events/initialize-reports])
+  (re-frame/dispatch-sync [::events/start-bird-loop])
+  (re-frame/dispatch-sync [::events/generate-birds])
+  (re-frame/dispatch-sync [::events/start-render-forest]))

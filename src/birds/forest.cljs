@@ -1,31 +1,29 @@
 (ns birds.forest
   (:require [quil.core :as q :include-macros true]
             [quil.middleware :as m]
-            [birds.actors :as actors]
-            [birds.bird :as bird]))
+            [re-frame.core :as re-frame]
+            [birds.views.subs :as subs]
+            [birds.actors :as actors]))
 
 (defn setup [settings]
   ; Set frame rate to 30 frames per second.
-  (q/frame-rate (:frame-rate @settings))
+  (q/frame-rate (:frame-rate settings))
   ;; setup function returns initial state
-  {:settings settings
-   :color 0
+  {:color 0
    :angle 0})
 
 (defn update-state [state]
   ; Update sketch state by changing circle color and position.
   (assoc state
-         :birds (-> state :settings deref :birds)
-         :show-birds? (-> state :settings deref :show-birds?)
-         :show-bird-hear? (-> state :settings deref :show-bird-hear?)
+         :birds @(re-frame/subscribe [::subs/birds])
+         :show-birds? @(re-frame/subscribe [::subs/show-birds?])
+         :show-bird-hear? @(re-frame/subscribe [::subs/show-bird-hear?])
          :color (mod (+ (:color state) 0.7) 255)
          :angle (+ (:angle state) 0.1)))
 
 (defn draw-state [state]
   ; Clear the sketch by filling it with light-grey color.
   (q/background 240)
-  ; Set circle color.
-  ;; (q/fill (:color state) 255 255)
 
   (when (:show-bird-hear? state)
     (doseq [bird (:birds state)]
@@ -43,8 +41,8 @@
 
 (defn start-rendering [settings]
   (q/defsketch birds
-    :host (:container-name @settings)
-    :size [(:width @settings) (:height @settings)]
+    :host (:container-name settings)
+    :size [(:width settings) (:height settings)]
     ;; setup function called only once, during sketch initialization.
     :setup #(setup settings)
     ;; update-state is called on each iteration before draw-state.

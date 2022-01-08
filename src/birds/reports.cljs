@@ -19,7 +19,7 @@
   (when-not (-> event :event-type #{:singing :re-sing})
     (swap! raw-events conj (assoc event :tick (time/now)))))
 
-(defn init! [settings]
+(defn init! []
   (events/attach-listener update-stats)
   (events/attach-listener add-raw-event))
 
@@ -66,7 +66,7 @@
        [:span {:class :desc} desc]
        [:span {:class :amount} (key @song-stats)]]))])
 
-(defn show [settings]
+(defn show []
   [:div {:class :reports}
    "Stats:"
    [:br] [:button {:on-click clear!} "Clear data"]
