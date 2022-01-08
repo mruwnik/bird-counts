@@ -99,6 +99,7 @@
 
 ;; Reporters
 (reg-side-effect-fx ::events/initialize-reports reports/init!)
+(reg-side-effect-fx ::events/attach-event-listener sim-events/attach-listener (partial take-last 1))
 
 ;; Observers
 (reg-item-dissoc-db ::events/remove-observer :observers)

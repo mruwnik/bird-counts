@@ -1,8 +1,9 @@
 (ns birds.reports
-  (:require [reagent.core :as r]
-            [clojure.string :as str]
-            [birds.time :as time]
-            [birds.events :as events]))
+  (:require [clojure.string :as str]
+            [reagent.core :as r]
+            [re-frame.core :as re-frame]
+            [birds.views.events :as event]
+            [birds.time :as time]))
 
 (defonce raw-events (r/atom []))
 (defonce song-stats (r/atom {}))
@@ -20,8 +21,8 @@
     (swap! raw-events conj (assoc event :tick (time/now)))))
 
 (defn init! []
-  (events/attach-listener update-stats)
-  (events/attach-listener add-raw-event))
+  (re-frame/dispatch [::event/attach-event-listener update-stats])
+  (re-frame/dispatch [::event/attach-event-listener add-raw-event]))
 
 (defn event->row [event]
   (->> [(-> event :bird-id)
