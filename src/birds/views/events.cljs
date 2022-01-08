@@ -24,6 +24,9 @@
 
 (defn reg-side-effect-db [key fun] (re-frame/reg-event-db key (fn [db _] (fun db) db)))
 
+(defn reg-item-append-db [key db-key]
+  (re-frame/reg-event-db key (fn [db [_ item]] (update db db-key conj item))))
+
 (re-frame/reg-event-db
  ::initialize-db
  (fn [_ _]
@@ -65,3 +68,6 @@
 
 ;; Reporters
 (reg-side-effect-fx ::initialize-reports reports/init!)
+
+;; Observers
+(reg-item-append-db ::add-observer :observers)

@@ -11,7 +11,10 @@
    :sing-rest-time 100
    :song-length 20
    :audio-sensitivity 50
-   :show-bird-hear? true
+   :show-bird-hear?     true
+   :show-birds?         false
+   :show-observers?     true
+   :show-observer-hear? true
 
    :speed 1
    :tick-length 100})

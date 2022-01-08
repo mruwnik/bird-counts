@@ -81,7 +81,7 @@
              :pos {:x (rand-int (:width settings))
                    :y (rand-int (:height settings))})
       atom
-      (bird/->Bird nil)))
+      (bird/->Bird)))
 
 (defn update-birds-count! [{:keys [num-of-birds] :as settings}]
   (swap! birds (fn [birds]

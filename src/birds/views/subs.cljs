@@ -2,6 +2,8 @@
   (:require [re-frame.core :as re-frame]))
 
 (re-frame/reg-sub ::birds (fn [db] (:birds db)))
+(re-frame/reg-sub ::observers (fn [db] (:observers db)))
+
 (re-frame/reg-sub ::num-of-birds (fn [db] (:num-of-birds db)))
 (re-frame/reg-sub ::volume (fn [db] (:volume db)))
 (re-frame/reg-sub ::audio-sensitivity (fn [db] (:audio-sensitivity db)))
@@ -14,3 +16,5 @@
 (re-frame/reg-sub ::tick-length (fn [db] (:tick-length db)))
 (re-frame/reg-sub ::show-birds? (fn [db] (:show-birds? db)))
 (re-frame/reg-sub ::show-bird-hear? (fn [db] (:show-bird-hear? db)))
+(re-frame/reg-sub ::show-observers? (fn [db] (:show-observers? db)))
+(re-frame/reg-sub ::show-observer-hear? (fn [db] (:show-observer-hear? db)))
