@@ -7,7 +7,10 @@
 
 (defrecord Observer [state]
   actors/Actor
-  (move! [_ x y] (swap! state assoc :pos {:x x :y y}))
+  (move-to! [_ x y] (swap! state assoc :pos {:x x :y y}))
+  (move-by! [_ [dx dy]]
+    (let [{:keys [x y]} (:pos @state)]
+      (swap! state assoc :pos {:x (+ x dx) :y (+ y dy)})))
   (hears? [_ event]
     (> (+ (:audio-sensitivity @state) (:volume event))
        (actors/dist-2d (:pos @state) (:pos event))))

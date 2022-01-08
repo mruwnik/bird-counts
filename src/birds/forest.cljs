@@ -34,7 +34,7 @@
         current-pos (current-mouse-pos)]
 
     (when (some-> prev-selected (= currently-selected))
-      (swap! (:state currently-selected) update :pos move-by (delta-pos prev-pos current-pos)))
+      (actors/move-by! currently-selected (delta-pos prev-pos current-pos)))
 
     (assoc state
            :prev-selected prev-selected

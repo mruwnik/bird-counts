@@ -11,11 +11,13 @@
   (q/ellipse (:x pos) (:y pos) (* 2 size) (* 2 size)))
 
 (defprotocol Actor
-  (move! [bird x y])
+  (move-to! [_ x y])
+  (move-by! [_ [x y]])
   (hears? [bird event]))
 
 (defprotocol Singer
   (sing! [bird])
+  (resing! [bird])
   (stop-singing! [bird])
   (can-sing? [bird])
   (singing? [bird]))

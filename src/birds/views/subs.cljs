@@ -1,7 +1,7 @@
 (ns birds.views.subs
   (:require [re-frame.core :as re-frame]))
 
-(re-frame/reg-sub ::birds (fn [db] (:birds db)))
+(re-frame/reg-sub ::birds (fn [db] (-> db :birds vals)))
 (re-frame/reg-sub ::observers (fn [db] (:observers db)))
 
 (re-frame/reg-sub ::num-of-birds (fn [db] (:num-of-birds db)))

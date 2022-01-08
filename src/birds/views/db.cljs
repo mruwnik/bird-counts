@@ -16,5 +16,5 @@
    :show-observers?     true
    :show-observer-hear? true
 
-   :speed 1
+   :speed 10
    :tick-length 100})
