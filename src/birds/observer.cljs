@@ -7,14 +7,16 @@
 (defn bound-val-delta [max-val current-val delta]
   (if (< 0 (+ current-val delta) max-val) delta 0))
 
-(defn random-walk [{:keys [movement-speed pos patch-size]}]
-  (let [{max-x :width max-y :height} patch-size
-        delta-x (* (rand-nth [1 -1]) (rand-int movement-speed))
-        delta-y (* (rand-nth [1 -1]) (rand-int movement-speed))]
-    [(bound-val-delta max-x (:x pos) delta-x)
-     (bound-val-delta max-y (:y pos) delta-y)]))
+(defn bound-delta [bounds current [delta-x delta-y]]
+  [(bound-val-delta (:width bounds) (:x current) delta-x)
+   (bound-val-delta (:height bounds) (:y current) delta-y)])
 
-(defn wander [observer])
+(defn wander [{:keys [prob-change-direction local-state movement-speed patch-size pos]}]
+  (when (< (rand) prob-change-direction)
+    (let [delta-x (* (rand-nth [1 -1]) (rand-int movement-speed))
+          delta-y (* (rand-nth [1 -1]) (- movement-speed (Math/abs delta-x)))]
+      (swap! local-state assoc :wander-dir [delta-x delta-y])))
+  (bound-delta patch-size pos (:wander-dir @local-state)))
 
 (defn follow-singing [{:keys [movement-speed pos local-state ignore-after] :as observer}]
   (let [{:keys [last-heard-pos last-heard-at]} @local-state]
@@ -45,9 +47,9 @@
   actors/Actor
   (move! [{:keys [strategy id] :as o}]
     (let [delta (case strategy
-                  :no-movement nil
-                  :random-walk (random-walk o)
+                  :no-movement    nil
                   :follow-singing (follow-singing o)
+                  :wander         (wander o)
                   nil)]
       (when delta
         {:id id :delta delta})))
@@ -104,7 +106,8 @@
                   :strategy :no-movement
                   :local-state (atom {})
 
-                  :movement-speed 10 ; by how much the observer can move per tick
+                  :movement-speed 5  ; by how much the observer can move per tick
                   :ignore-after 100  ; stop following a specific bird after this many ticks
                   :should-wander? true
+                  :prob-change-direction 0.05
                   }))

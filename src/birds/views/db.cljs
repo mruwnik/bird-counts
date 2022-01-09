@@ -16,7 +16,13 @@
    :show-observers?     true
    :show-observer-hear? true
 
-   :observer-strategies [:no-movement :random-walk :follow-singing]
+   :bird-colour    [0 0 0]
+   :song-colour    [0 0 255]
+   :resing-colour  [0 150 0]
+   :hearing-colour [255 0 0]
+   :resting-colour [150 0 0]
+
+   :observer-strategies [:no-movement :follow-singing :wander]
 
    :speed 10
    :tick-length 100})

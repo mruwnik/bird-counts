@@ -55,7 +55,7 @@
 (defn colour-picker [class desc value dispatcher]
   [:div {:class [:setting-input class]}
    desc
-   [:input {:type :color :id class :name class
+   [:input {:type :color :id (gensym)
             :value (hexify-rgb value)
             :on-change #(-> % .-target .-value dehexify dispatcher)}]])
 

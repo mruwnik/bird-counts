@@ -22,8 +22,8 @@
 
   actors/Singer
   (sing! [bird] (assoc bird :singing-time (time/now)
-                       :singing? true))
-  (resing! [bird] (assoc bird :resinging? true))
+                            :singing? true))
+  (resing! [bird] (assoc bird :resinging true))
   (stop-singing! [bird] (assoc bird :singing? false :resinging false))
   (can-sing? [{:keys [singing-time sing-rest-time]}]
     (or (not singing-time)
@@ -31,15 +31,19 @@
   (singing? [bird] (:singing? bird))
 
   actors/Draw-actor
-  (draw-song! [bird] (actors/draw-circle! (:pos bird) (:volume bird) (or (:song-colour bird) [0 0 255])))
+  (draw-song! [bird]
+    (actors/draw-circle! (:pos bird) (:volume bird)
+                         (or
+                          (when (:resinging bird)
+                            (:resing-colour bird))
+                           (:song-colour bird)
+                           [0 0 255])))
   (draw-hearing! [bird]
-    (actors/draw-circle! (:pos bird)
-                  (:audio-sensitivity bird)
-                  (cond
-                    (:resinging bird) [0 150 0]
-                    (not (actors/can-sing? bird)) [150 0 0]
-                    (:hearing-colour bird) (:hearing-colour bird)
-                    :else [255 0 0])))
+    (actors/draw-circle! (:pos bird) (:audio-sensitivity bird)
+                         (or (when-not (actors/can-sing? bird)
+                               (:resting-colour bird))
+                             (:hearing-colour bird)
+                             [255 0 0])))
   (draw-actor! [{:keys [bird-colour pos actor-radius]}]
     (actors/draw-circle! pos actor-radius (or bird-colour [0 0 0]))))
 
@@ -47,7 +51,8 @@
   (-> settings
       (select-keys [:audio-sensitivity :spontaneous-sing-prob
                     :motivated-sing-prob :motivated-sing-after
-                    :sing-rest-time :song-length :volume])
+                    :sing-rest-time :song-length :volume
+                    :bird-colour :resing-colour :song-colour :hearing-colour :resting-colour])
       (assoc :id id :actor-radius 10
              :pos {:x (rand-int (:width settings))
                    :y (rand-int (:height settings))})

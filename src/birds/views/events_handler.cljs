@@ -16,6 +16,8 @@
           (partition 2 vals)))
 
 (defn reg-side-effect-fx
+  "Register an effect that will just call a function (for side effects).
+  `param-extractor is used to extract any parameters from the event."
   ([key fun] (reg-side-effect-fx key fun nil))
   ([key fun param-extractor]
    (re-frame/reg-event-fx
@@ -26,32 +28,63 @@
         (fun))
       nil))))
 
-(defn reg-side-effect-db [key fun] (re-frame/reg-event-db key (fn [db _] (fun db) db)))
+(defn reg-side-effect-db
+  "Register an effect that needs the state map to cause a side effect.
+  The state map won't be changed by this function - it's just to get side effects."
+  [key fun] (re-frame/reg-event-db key (fn [db _] (fun db) db)))
 
-(defn reg-item-append-db [key db-key]
-  (re-frame/reg-event-db key (fn [db [_ item]] (update db db-key conj item))))
-(defn reg-item-dissoc-db [key db-key]
-  (re-frame/reg-event-db key (fn [db [_ item]] (update db db-key dissoc item))))
-(defn reg-item-assoc-db [key db-key]
-  (re-frame/reg-event-db
-   key
-   (fn [db event]
-     (assoc-in db (->> event rest (drop-last 1) (concat [db-key])) (last event)))))
+(defn reg-conditional-db
+  "Register an effect that will update the database with whatever the given `fun`
+  returns, or if `nil` then the database will be left unchanged."
+  [key fun] (re-frame/reg-event-db key (fn [db event] (or (fun db event) db))))
 
-(defn reg-conditional-db [key fun] (re-frame/reg-event-db key (fn [db event] (or (fun db event) db))))
+(defn reg-event-db-notifications
+  "Register an effect that will update the database, and will also dispatch events
+  to each item returned by `(apply propagate-to-fn event).
+  It's assumed that the first item of the event is just a dispatch key, so will be ignored,
+  and the last item is also ignored, coz I'm a lazy slob.
+  So if an event like `[:event-id :param1 :param2 :param3 :notify-me]` is recieved,
+  and `propagate-to-fn == last`, then an dispatch will be sent to `[:notify-me :param1 :param2 :param3]`"
+  ([key propagate-to-fn fun] (reg-event-db-notifications key propagate-to-fn identity fun))
+  ([key propagate-to-fn event-extract-fn fun]
+   (re-frame/reg-event-fx
+    key
+    (fn [{db :db} event]
+      (assoc?
+       {:db (fun db event)}
+       :fx (when-let [propagate-to (apply propagate-to-fn event)]
+             (->> propagate-to
+                  (map (partial conj (rest event)))
+                  (map event-extract-fn)
+                  (map vec)
+                  (map (partial conj [:dispatch]))
+                  vec)))))))
 
-(defn reg-event-db-notifications [key propagate-to-fn fun]
-  (re-frame/reg-event-fx
-   key
-   (fn [{db :db} event]
-     (assoc?
-      {:db (fun db event)}
-      :fx (when-let [propagate-to (apply propagate-to-fn event)]
-            (->> propagate-to
-                 (map (partial conj (->> event rest (drop-last 1))))
-                 (map vec)
-                 (map (partial conj [:dispatch]))
-                 vec))))))
+(defn reg-item-append-db
+  "Register an effect that will append whatever is provided as the second arg of the event to `(db-key db).
+  The optional `notifications` param can be provided for notifications to be dispatched."
+  [key db-key & notifications]
+  (reg-event-db-notifications key (constantly notifications) (fn [db [_ item]] (update db db-key conj item))))
+
+(defn reg-item-replace-db
+  "Register an effect that will remove whatever is provided as the second arg of the event from `(db-key db).
+  The optional `notifications` param can be provided for notifications to be dispatched."
+  [key db-key & notifications]
+  (reg-event-db-notifications key (constantly notifications) (fn [db [_ item]] (update db db-key (partial remove #{item})))))
+
+(defn reg-item-dissoc-db
+  "Register an effect that will remove from `db` whatever is provided as the second value of the event.
+  The optional `notifications` param can be provided for notifications to be dispatched."
+  [key db-key & notifications]
+  (reg-event-db-notifications key (constantly notifications) (fn [db [_ item]] (update db db-key dissoc item))))
+
+(defn reg-item-assoc-db
+  "Register an effect that will assoc-in `db` whatever is provided as the `(rest event)`.
+  The optional `notifications` param can be provided for notifications to be dispatched."
+  [key db-key & notifications]
+  (reg-event-db-notifications key (constantly notifications)
+     (fn [db event]
+       (assoc-in db (->> event rest (drop-last 1) (concat [db-key])) (last event)))))
 
 (re-frame/reg-event-db
  ::events/initialize-db
@@ -74,6 +107,7 @@
 (reg-event-db-notifications
  ::events/update-bird-setting
  (fn [_ _k _v propagate-to] propagate-to)
+ (partial drop-last 1)
  (fn [db [_ key value]]
    (-> db
        (assoc key value)
@@ -83,7 +117,6 @@
  ::events/generate-birds
  (fn [db _]
    (update db :birds birds/update-birds-count db)))
-
 
 (re-frame/reg-event-db
  ::events/update-bird
@@ -113,27 +146,30 @@
 (reg-side-effect-fx ::events/attach-event-listener sim-events/attach-listener (partial take-last 1))
 
 ;; Observers
-(reg-item-dissoc-db ::events/remove-observer :observers)
+(reg-item-dissoc-db ::events/remove-observer :observers ::events/observer-removed)
+(reg-item-append-db ::events/observer-added :observer-ids)
+(reg-item-replace-db ::events/observer-removed :observer-ids)
 
 (reg-side-effect-fx ::events/intitialise-observers-watch
                     (fn [] (sim-events/attach-listener #(re-frame/dispatch [::events/observer-event %]))))
 
-(re-frame/reg-event-db
+(re-frame/reg-event-fx
  ::events/add-observer
- (fn [db _]
+ (fn [{db :db} _]
    (let [new-ob (observers/new-observer db)]
-     (assoc-in db [:observers (:id new-ob)] new-ob))))
+     {:db (assoc-in db [:observers (:id new-ob)] new-ob)
+      :dispatch [::events/observer-added (:id new-ob)]})))
 
 (reg-event-db-notifications
  ::events/update-observer-setting
  (fn [_e _o _k _v propagate-to] propagate-to)
- (fn [db [_ observer key value]]
-   (assoc-in db [:observers (:id observer) key] value)))
+ (fn [db [_ observer-id key value]]
+   (assoc-in db [:observers observer-id key] value)))
 
 (re-frame/reg-event-db
  ::events/toggle-observation
- (fn [db [_ o _ listen?]]
-   (update-in db [:observers (:id o)] (if listen? actors/start-listening actors/stop-listening))))
+ (fn [db [_ observer-id _ listen?]]
+   (update-in db [:observers observer-id] (if listen? actors/start-listening actors/stop-listening))))
 
 (defn inc-hearers [observers event]
   (->> observers

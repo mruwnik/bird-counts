@@ -4,6 +4,9 @@
 (re-frame/reg-sub ::actors (fn [db] (concat (-> db :birds vals) (-> db :observers vals))))
 (re-frame/reg-sub ::birds (fn [db] (-> db :birds vals)))
 (re-frame/reg-sub ::observers (fn [db] (-> db :observers vals)))
+(re-frame/reg-sub ::observer (fn [db [_ id]] (-> db :observers (get id))))
+(re-frame/reg-sub ::observer-value (fn [db [_ id key]] (get-in db [:observers id key])))
+(re-frame/reg-sub ::observer-ids (fn [db] (->> db :observer-ids)))
 (re-frame/reg-sub ::observer-strategies (fn [db] (-> db :observer-strategies)))
 
 (re-frame/reg-sub ::num-of-birds (fn [db] (:num-of-birds db)))
@@ -20,3 +23,9 @@
 (re-frame/reg-sub ::show-bird-hear? (fn [db] (:show-bird-hear? db)))
 (re-frame/reg-sub ::show-observers? (fn [db] (:show-observers? db)))
 (re-frame/reg-sub ::show-observer-hear? (fn [db] (:show-observer-hear? db)))
+
+(re-frame/reg-sub ::bird-colour (fn [db] (:bird-colour db)))
+(re-frame/reg-sub ::song-colour (fn [db] (:song-colour db)))
+(re-frame/reg-sub ::resing-colour (fn [db] (:resing-colour db)))
+(re-frame/reg-sub ::hearing-colour (fn [db] (:hearing-colour db)))
+(re-frame/reg-sub ::resting-colour (fn [db] (:resting-colour db)))
