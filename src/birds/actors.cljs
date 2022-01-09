@@ -5,6 +5,8 @@
   (Math/sqrt (+ (Math/pow (- (:x p1) (:x p2)) 2)
                 (Math/pow (- (:y p1) (:y p2)) 2))))
 
+(defn delta [p1 p2] [(- (:x p2) (:x p1)) (- (:y p2) (:y p1))])
+
 (defn draw-circle! [pos size colour]
   (apply q/fill colour)
   (q/no-stroke)

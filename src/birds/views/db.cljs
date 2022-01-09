@@ -16,7 +16,7 @@
    :show-observers?     true
    :show-observer-hear? true
 
-   :observer-strategies [:no-movement :random-walk]
+   :observer-strategies [:no-movement :random-walk :follow-singing]
 
    :speed 10
    :tick-length 100})

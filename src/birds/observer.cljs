@@ -7,12 +7,35 @@
 (defn bound-val-delta [max-val current-val delta]
   (if (< 0 (+ current-val delta) max-val) delta 0))
 
-(defn random-walk [{:keys [id movement-speed pos patch-size]}]
+(defn random-walk [{:keys [movement-speed pos patch-size]}]
   (let [{max-x :width max-y :height} patch-size
         delta-x (* (rand-nth [1 -1]) (rand-int movement-speed))
         delta-y (* (rand-nth [1 -1]) (rand-int movement-speed))]
-    {:id id :delta [(bound-val-delta max-x (:x pos) delta-x)
-                    (bound-val-delta max-y (:y pos) delta-y)]}))
+    [(bound-val-delta max-x (:x pos) delta-x)
+     (bound-val-delta max-y (:y pos) delta-y)]))
+
+(defn wander [observer])
+
+(defn follow-singing [{:keys [movement-speed pos local-state ignore-after] :as observer}]
+  (let [{:keys [last-heard-pos last-heard-at]} @local-state]
+    (cond
+      ;; give up - it took too long
+      (and last-heard-at (< (+ last-heard-at ignore-after) (time/now)))
+      (do (swap! local-state dissoc :last-heard-at :last-heard-pos) nil)
+
+      (and last-heard-pos (> (actors/dist-2d pos last-heard-pos) 10))
+      (let [[delta-x delta-y] (actors/delta pos last-heard-pos)
+            abs-delta-x (Math/abs delta-x)
+            abs-delta-y (Math/abs delta-y)]
+        ;; FIXME: This should really move proportionally to the distance...
+        [(* (min abs-delta-x movement-speed) (if (zero? delta-x) 1 (/ delta-x abs-delta-x)))
+         (* (min abs-delta-y movement-speed) (if (zero? delta-y) 1 (/ delta-y abs-delta-y)))])
+
+      (:should-wander? observer)
+      (wander observer)
+
+      :else
+      nil)))
 
 (defrecord Observer [pos actor-radius id
                      audio-sensitivity
@@ -20,19 +43,29 @@
                      observing observations
                      hearing-colour observer-colour]
   actors/Actor
-  (move! [{:keys [strategy id movement-speed] :as o}]
-    (case strategy
-      :no-movement nil
-      :random-walk (random-walk o)
-      nil))
+  (move! [{:keys [strategy id] :as o}]
+    (let [delta (case strategy
+                  :no-movement nil
+                  :random-walk (random-walk o)
+                  :follow-singing (follow-singing o)
+                  nil)]
+      (when delta
+        {:id id :delta delta})))
   (move-to! [o x y] (assoc o :pos {:x x :y y}))
   (move-by! [{{:keys [x y]} :pos :as o} [dx dy]] (assoc o :pos {:x (+ x dx) :y (+ y dy)}))
 
   actors/Listener
   (hears? [o event]
-    (and (:observing o)
-         (> (+ (:audio-sensitivity o) (:volume event))
-            (actors/dist-2d (:pos o) (:pos event)))))
+    (let [hears? (and (:observing o)
+                      (> (+ (:audio-sensitivity o) (:volume event))
+                         (actors/dist-2d (:pos o) (:pos event))))]
+      (when (and hears?
+                 (= (:strategy o) :follow-singing)
+                 (not= (-> o :local-state deref :last-heard-pos) (:pos event)))
+        (swap! (:local-state o) assoc :last-heard-pos (:pos event)
+                                      :last-heard-at (time/now)))
+
+      hears?))
   (notice [{periods :observations :as o} event]
     (update-in o [:observations (-> periods count dec) :count] inc))
 
@@ -69,4 +102,9 @@
                   :actor-radius 10
 
                   :strategy :no-movement
-                  :movement-speed 10}))
+                  :local-state (atom {})
+
+                  :movement-speed 10 ; by how much the observer can move per tick
+                  :ignore-after 100  ; stop following a specific bird after this many ticks
+                  :should-wander? true
+                  }))
