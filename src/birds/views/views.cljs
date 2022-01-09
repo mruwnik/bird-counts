@@ -48,11 +48,11 @@
   (html/select :strategy "Observer strategy"
                (:strategy observer)
                @(re-frame/subscribe [::subs/observer-strategies])
-               #(dispatch-item-update observer :strategy % nil)))
+               #(dispatch-item-update observer :strategy (keyword %) nil)))
 
 (defn observer-controls [observer]
   [:details {:key (gensym) :class :observer :open true}
-   [:summary (:id observer)]
+   [:summary (str "Observer no " (:id observer))]
    [item-inputter observer html/checkbox :observing "Currently observing?" ::event/toggle-observation]
    [strategy-selector observer]
    [item-inputter observer html/int-input :audio-sensitivity "How far can the observer hear"]
@@ -62,17 +62,13 @@
    [:br]
    [:button {:on-click #(re-frame/dispatch [::event/remove-observer (:id observer)])} "Remove observer"]])
 
-(defn observers []
-  [:div {:class :observer-block}
-   [:div {:class :observers}
-    (map observer-controls @(re-frame/subscribe [::subs/observers]))]
-   [:button {:on-click #(re-frame/dispatch [::event/add-observer])} "Add new observer"]])
-
-
 (defn render-view []
   [:div
    [gui]
    [:hr]
-   [observers]
+   [:div {:class :observer-block}
+    [:div {:class :observers}
+     (map observer-controls @(re-frame/subscribe [::subs/observers]))]
+    [:button {:on-click #(re-frame/dispatch [::event/add-observer])} "Add new observer"]]
    [:hr]
    (reports/show)])

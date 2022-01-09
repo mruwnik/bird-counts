@@ -38,6 +38,8 @@
    (fn [db event]
      (assoc-in db (->> event rest (drop-last 1) (concat [db-key])) (last event)))))
 
+(defn reg-conditional-db [key fun] (re-frame/reg-event-db key (fn [db event] (or (fun db event) db))))
+
 (defn reg-event-db-notifications [key propagate-to-fn fun]
   (re-frame/reg-event-fx
    key
@@ -93,9 +95,18 @@
 (reg-side-effect-fx ::events/set-speed time/set-speed! (partial take-last 1))
 
 ;; simulation events
-(reg-side-effect-fx ::events/start-bird-loop sim-events/bird-loop)
+(reg-side-effect-fx ::events/start-bird-loop sim-events/actors-loop)
 
 (reg-side-effect-db ::events/start-render-forest forest/start-rendering)
+
+(reg-conditional-db
+ ::events/move-actor-by
+ (fn [db [_ actor delta]]
+   (when-let [item-key (condp = (str (type actor))
+                    (str observers/Observer) :observers
+                    (str birds/Bird)         :birds
+                    nil)]
+     (update-in db [item-key (:id actor)] actors/move-by! delta))))
 
 ;; Reporters
 (reg-side-effect-fx ::events/initialize-reports reports/init!)
@@ -124,20 +135,14 @@
  (fn [db [_ o _ listen?]]
    (update-in db [:observers (:id o)] (if listen? actors/start-listening actors/stop-listening))))
 
-(re-frame/reg-event-db
- ::events/move-observer-by
- (fn [db [_ observer delta]]
-   (update-in db [:observers (:id observer)] actors/move-by! delta)))
-
 (defn inc-hearers [observers event]
   (->> observers
        vals
        (filter #(actors/hears? % event))
        (reduce #(update %1 (:id %2) actors/notice event) observers)))
 
-(re-frame/reg-event-db
+(reg-conditional-db
  ::events/observer-event
  (fn [db [_ event]]
-   (if (= (:event-type event) :start-singing)
-     (update db :observers inc-hearers event)
-     db)))
+   (when (= (:event-type event) :start-singing)
+     (update db :observers inc-hearers event))))

@@ -12,11 +12,11 @@
    :song-length 20
    :audio-sensitivity 50
    :show-bird-hear?     true
-   :show-birds?         false
+   :show-birds?         true
    :show-observers?     true
    :show-observer-hear? true
 
-   :observer-strategies [:no-movement]
+   :observer-strategies [:no-movement :random-walk]
 
    :speed 10
    :tick-length 100})

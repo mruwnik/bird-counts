@@ -62,7 +62,7 @@
 (defn select [class desc value options dispatcher]
   [:div {:class [:setting-input class]}
    desc
-   [:select {:name class :default-value value :on-select dispatcher}
+   [:select {:name class :default-value value :on-change #(-> % .-target .-value dispatcher)}
     (when-not (seq (filter #{value} options))
       [:option {:value nil} "-"])
     (for [option options] [:option {:value option :key (gensym)} option])]])

@@ -21,6 +21,21 @@
 (defn replace-bird [bird]
   (re-frame/dispatch [::event-types/update-bird bird]))
 
+;; Movement
+
+(defn dispatch-move [{:keys [item delta]}]
+  (re-frame/dispatch [::event-types/move-actor-by item delta]))
+
+(defn move-actors! []
+  (->> (concat @(re-frame/subscribe [::subs/observers])
+               @(re-frame/subscribe [::subs/birds]))
+       (map #(some-> % actors/move! (assoc :item %)))
+       (remove nil?)
+       (map dispatch-move)
+       doall))
+
+;; Handle bird actions
+
 (defn start-singing! [bird]
   (replace-bird (actors/sing! bird))
   (assoc (base-event bird :start-singing) :duration 0))
@@ -87,10 +102,11 @@
     (fun event))
   events)
 
-(defn bird-loop []
+(defn actors-loop []
   (async/go-loop [events nil]
     (async/alts! [(async/timeout (time/next-tick-in))])
     (time/tick!)
+    (move-actors!)
     (recur (->> @(re-frame/subscribe [::subs/birds])
                 (map (partial handle-bird events))
                 (remove nil?)

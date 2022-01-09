@@ -17,24 +17,24 @@
 (defn delta-pos [p1 p2] [(- (:x p2) (:x p1)) (- (:y p2) (:y p1))])
 (defn move-by [pos [delta-x delta-y]] (-> pos (update :x + delta-x) (update :y + delta-y)))
 
-(defn clicked-observer [observers]
+(defn clicked-item [items]
   (when (q/mouse-pressed?)
-    (->> observers
+    (->> items
          (sort-by :id)
-         (filter (fn [{:keys [observer-radius pos]}]
-                     (> observer-radius (actors/dist-2d pos (current-mouse-pos)))))
+         (filter (fn [{:keys [actor-radius pos]}]
+                     (> actor-radius (actors/dist-2d pos (current-mouse-pos)))))
          first)))
 
 (defn handle-mouse [state]
  (let [prev-selected (:currently-selected state)
        currently-selected (if (and (q/mouse-pressed?) prev-selected)
                             prev-selected
-                            (clicked-observer @(re-frame/subscribe [::subs/observers])))
+                            (clicked-item @(re-frame/subscribe [::subs/actors])))
        prev-pos (:current-pos state)
        current-pos (current-mouse-pos)]
 
     (when (some-> prev-selected (= currently-selected))
-      (re-frame/dispatch [::events/move-observer-by currently-selected (delta-pos prev-pos current-pos)]))
+      (re-frame/dispatch [::events/move-actor-by currently-selected (delta-pos prev-pos current-pos)]))
 
     (assoc state
            :prev-selected prev-selected

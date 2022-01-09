@@ -1,6 +1,7 @@
 (ns birds.views.subs
   (:require [re-frame.core :as re-frame]))
 
+(re-frame/reg-sub ::actors (fn [db] (concat (-> db :birds vals) (-> db :observers vals))))
 (re-frame/reg-sub ::birds (fn [db] (-> db :birds vals)))
 (re-frame/reg-sub ::observers (fn [db] (-> db :observers vals)))
 (re-frame/reg-sub ::observer-strategies (fn [db] (-> db :observer-strategies)))

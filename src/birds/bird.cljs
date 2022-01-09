@@ -2,14 +2,15 @@
   (:require [birds.actors :as actors]
             [birds.time :as time]))
 
-(defrecord Bird [pos id
+(defrecord Bird [pos id actor-radius
                  volume audio-sensitivity
                  singing-time sing-rest-time
                  singing? resinging?
                  bird-colour song-colour hearing-colour]
   actors/Actor
+  (move! [_])
   (move-to! [bird x y] (assoc bird :pos {:x x :y y}))
-  (move-by! [_ [x y]])
+  (move-by! [{{:keys [x y]} :pos :as b} [dx dy]] (assoc b :pos {:x (+ x dx) :y (+ y dy)}))
 
   actors/Listener
   (hears? [{:keys [audio-sensitivity volume pos]} event]
@@ -39,14 +40,15 @@
                     (not (actors/can-sing? bird)) [150 0 0]
                     (:hearing-colour bird) (:hearing-colour bird)
                     :else [255 0 0])))
-  (draw-actor! [{:keys [bird-colour pos]}] (actors/draw-circle! pos 5 (or bird-colour [0 0 0]))))
+  (draw-actor! [{:keys [bird-colour pos actor-radius]}]
+    (actors/draw-circle! pos actor-radius (or bird-colour [0 0 0]))))
 
 (defn add-random-bird [settings id]
   (-> settings
       (select-keys [:audio-sensitivity :spontaneous-sing-prob
                     :motivated-sing-prob :motivated-sing-after
                     :sing-rest-time :song-length :volume])
-      (assoc :id id
+      (assoc :id id :actor-radius 10
              :pos {:x (rand-int (:width settings))
                    :y (rand-int (:height settings))})
       (map->Bird)))
