@@ -51,36 +51,4 @@
                   :pos {:x (rand-int (:width settings))
                         :y (rand-int (:height settings))}
                   :observer-radius 10
-                  :strategy nil}))
-
-(defn dispatch-update [observer key value notifications]
-  (re-frame/dispatch [::event/update-observer-setting observer key value notifications]))
-
-(defn inputter [observer input-type key desc & notifications]
-  (input-type key desc
-              (key observer)
-              #(dispatch-update observer key % notifications)))
-
-(defn strategy-selector [observer]
-  (html/select :strategy "Observer strategy"
-               (:strategy observer)
-               [:asd :fwe :asd :qwd]
-               #(dispatch-update observer :strategy % nil)))
-
-(defn observer-controls [observer]
-  [:details {:key (gensym) :class :observer :open true}
-   [:summary (:id observer)]
-   [inputter observer html/checkbox :observing "Currently observing?" ::event/toggle-observation]
-   [strategy-selector observer]
-   [inputter observer html/int-input :audio-sensitivity "How far can the observer hear"]
-   [inputter observer html/colour-picker :observer-colour "The colour of the observer"]
-   [inputter observer html/colour-picker :hearing-colour "The colour of the hearing radius"]
-   [:span {:class :observer-results} (str "Heard " (->> observer :observations (map :count) (reduce +)) " birds")]
-   [:br]
-   [:button {:on-click #(re-frame/dispatch [::event/remove-observer (:id observer)])} "Remove observer"]])
-
-(defn controls []
-  [:div {:class :observer-block}
-   [:div {:class :observers}
-    (map observer-controls @(re-frame/subscribe [::subs/observers]))]
-   [:button {:on-click #(re-frame/dispatch [::event/add-observer])} "Add new observer"]])
+                  :strategy :no-movement}))

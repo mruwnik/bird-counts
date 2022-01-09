@@ -3,6 +3,7 @@
 
 (re-frame/reg-sub ::birds (fn [db] (-> db :birds vals)))
 (re-frame/reg-sub ::observers (fn [db] (-> db :observers vals)))
+(re-frame/reg-sub ::observer-strategies (fn [db] (-> db :observer-strategies)))
 
 (re-frame/reg-sub ::num-of-birds (fn [db] (:num-of-birds db)))
 (re-frame/reg-sub ::volume (fn [db] (:volume db)))

@@ -16,5 +16,7 @@
    :show-observers?     true
    :show-observer-hear? true
 
+   :observer-strategies [:no-movement]
+
    :speed 10
    :tick-length 100})
