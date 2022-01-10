@@ -91,9 +91,10 @@
 (re-frame/reg-event-db
  ::events/initialize-db
  (fn [_ _]
-   (-> db/default-db :speed time/set-speed!)
-   (-> db/default-db :tick-length time/set-tick-length!)
-   db/default-db))
+   (let [db (db/load-db)]
+     (-> db :speed time/set-speed!)
+     (-> db :tick-length time/set-tick-length!)
+     db)))
 
 (re-frame/reg-event-db
  ::events/initialize-gui
@@ -145,7 +146,7 @@
 
 ;; Reporters
 (reg-side-effect-fx ::events/initialize-reports reports/init!)
-(reg-side-effect-fx ::events/attach-event-listener sim-events/attach-listener (partial take-last 1))
+(reg-side-effect-fx ::events/attach-event-listener sim-events/attach-listener event-last-param)
 
 ;; Observers
 (reg-item-dissoc-db ::events/remove-observer :observers ::events/observer-removed)

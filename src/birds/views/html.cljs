@@ -1,9 +1,5 @@
 (ns birds.views.html
-  (:require [clojure.string :as str]))
-
-(defn parse-int [val] (js/parseInt val 10))
-(defn parse-hex [val] (js/parseInt val 16))
-(defn parse-float [val] (js/parseFloat val 10) )
+  (:require [birds.converters :refer [parse-int parse-float dehexify hexify-rgb]]))
 
 (defn num-input
   [class desc value dispatcher parser params]
@@ -41,16 +37,6 @@
    [:input {:type "checkbox"
             :checked value
             :on-change #(-> % .-target .-checked dispatcher)}]])
-
-(defn dehexify [val] (->> val rest (partition 2) (map (comp parse-hex str/join)) vec))
-(defn hexify-rgb [[r g b]]
-  (str "#"
-       (-> (+ (bit-shift-left 1 24)
-              (bit-shift-left r 16)
-              (bit-shift-left g 8)
-              (bit-shift-left b 0))
-           (.toString 16)
-           (subs 1))))
 
 (defn colour-picker [class desc value dispatcher]
   [:div {:class [:setting-input class]}
