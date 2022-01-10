@@ -162,6 +162,13 @@
      {:db (assoc-in db [:observers (:id new-ob)] new-ob)
       :dispatch [::events/observer-added (:id new-ob)]})))
 
+(re-frame/reg-event-fx
+ ::events/generate-observers
+ (fn [{db :db} [_ params]]
+   (when-let [obs (observers/make-observers db params)]
+     {:db (assoc db :observers (reduce #(assoc %1 (:id %2) %2) {} obs))
+      :fx (for [o obs] [:dispatch [::events/observer-added (:id o)]])})))
+
 (reg-event-db-notifications
  ::events/update-observer-setting
  (fn [_e _o _k _v propagate-to] propagate-to)

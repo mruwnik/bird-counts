@@ -23,14 +23,12 @@
    :hearing-colour [[255 0 0] conv/parse-colour]
    :resting-colour [[150 0 0] conv/parse-colour]
 
-   :observer-strategies [:no-movement :follow-singing :wander]
+   :observer-strategies [[:no-movement :follow-singing :wander] identity]
 
    :speed       [10 conv/parse-int]
    :tick-length [100 conv/parse-int]})
 
+(defn parsers [] (reduce-kv #(assoc %1 %2 (second %3)) {} default-db))
 (defn default-vals [] (reduce-kv #(assoc %1 %2 (first %3)) {} default-db))
 
-(defn load-db []
-  (reduce-kv #(assoc %1 %2 ((-> %2 default-db second) %3))
-             (default-vals)
-             (conv/parse-url-params)))
+(defn load-db [] (conv/parse-values (parsers) (default-vals) (conv/parse-url-params)))

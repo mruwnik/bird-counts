@@ -24,3 +24,8 @@
     (->> param-strs
          (map #(str/split % "="))
          (reduce #(assoc %1 (-> %2 first keyword) (second %2)) {}))))
+
+(defn parse-values [parsers defaults to-parse]
+  (reduce-kv #(assoc %1 %2 ((parsers %2) %3))
+             defaults
+             (select-keys to-parse (keys parsers))))

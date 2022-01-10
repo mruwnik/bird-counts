@@ -17,6 +17,8 @@ I personally use Emacs + Cider for development, but a quick test of the above al
 
 Simulations can be configured either via the web GUI, or by passing in appropriate URL parameters. The following options are supported (with default values):
 
+### Bird options
+
  * num-of-birds          - 10 - the number of birds to simulate
  * volume                - 25 - the radius of each birds volume (assume pixels)
 
@@ -40,6 +42,18 @@ Simulations can be configured either via the web GUI, or by passing in appropria
  * resing-colour  - #009600 - the colour of the audible radius of a bird's song if it's motivated singing
  * hearing-colour - #FF0000 - the colour of the radius in which a bird can hear other birds singing
  * resting-colour - #960000 - the colour of the radius in which a bird can hear other birds singing when the bird is resting
+
+### Observer options
+
+ * observers         - 1 - the number of observers to start off with
+ * observer-strategy - the strategy used by observers to count birds. Should be one of `no-movement`, `wander`, `follow-singing`
+
+#### Strategy specific parameters
+##### wander
+ * observer-prob-change-direction - 0.05 - the probability of changing wander direction in a given tick
+##### follow-singing
+ * observer-should-wander? - true - whether the observer should wander when no bird heard
+ * observer-ignore-after   - 100 - after how many ticks after hearing a bird song should the observer continue moving
 
 ### Speed options
 

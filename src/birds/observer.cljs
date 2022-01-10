@@ -1,5 +1,6 @@
 (ns birds.observer
   (:require [birds.actors :as actors]
+            [birds.converters :as conv]
             [birds.time :as time]))
 
 (defn rand-bool [] (rand-nth [true false]))
@@ -111,6 +112,22 @@
                   :should-wander? true
                   :prob-change-direction 0.05}))
 
+(def param-parsers
+  {:observer-strategy       keyword
+   :observer-movement-speed conv/parse-int
+   ;; follow
+   :observer-ignore-after conv/parse-int
+   ;; wander
+   :observer-should-wander?        conv/parse-bool
+   :observer-prob-change-direction conv/parse-float})
+
+(defn make-observers [settings params]
+  (when (:observers params)
+    (for [_ (-> params :observers conv/parse-int range)]
+      (->> params
+           (conv/parse-values param-parsers {})
+           (reduce-kv #(assoc %1 (-> %2 name (subs 9) keyword) %3) {}) ; strip the prepending 'observer-'
+           (merge (new-observer settings))))))
 
 (def observations-headers [:start :end :count])
 (defn get-observations [observer] (prn observer)(:observations observer))
