@@ -75,7 +75,12 @@
    [item-inputter id html/colour-picker :hearing-colour "The colour of the hearing radius"]
    [observer-stats id]
    [:br]
-   [:button {:on-click #(re-frame/dispatch [::event/remove-observer id])} "Remove observer"]])
+   [:div {:class :events-downloader}
+    "Download all events"
+    [:button {:on-click #(re-frame/dispatch [::event/download-observer-data id :csv])} "csv"]
+    [:button {:on-click #(re-frame/dispatch [::event/download-observer-data id :json])} "json"]]
+   [:button {:on-click #(re-frame/dispatch [::event/remove-observer id])} "Remove observer"]
+   [:button {:on-click #(re-frame/dispatch [::event/clear-observer-data id])} "Clear data"]])
 
 (defn observers-block []
   [:div {:class :observer-block}

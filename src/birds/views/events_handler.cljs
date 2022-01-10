@@ -8,6 +8,7 @@
             [birds.observer :as observers]
             [birds.bird :as birds]
             [birds.time :as time]
+            [birds.views.downloader :as downloader]
             [birds.views.events :as events]))
 
 (defn assoc? [dict & vals]
@@ -15,6 +16,7 @@
           dict
           (partition 2 vals)))
 
+(defn event-last-param [_ event] (take-last 1 event))
 (defn reg-side-effect-fx
   "Register an effect that will just call a function (for side effects).
   `param-extractor is used to extract any parameters from the event."
@@ -22,9 +24,9 @@
   ([key fun param-extractor]
    (re-frame/reg-event-fx
     key
-    (fn [_ params]
+    (fn [context params]
       (if param-extractor
-        (apply fun (param-extractor params))
+        (apply fun (param-extractor context params))
         (fun))
       nil))))
 
@@ -124,8 +126,8 @@
    (assoc-in db [:birds (:id bird)] bird)))
 
 ;; Simulation controls
-(reg-side-effect-fx ::events/set-tick-length time/set-tick-length! (partial take-last 1))
-(reg-side-effect-fx ::events/set-speed time/set-speed! (partial take-last 1))
+(reg-side-effect-fx ::events/set-tick-length time/set-tick-length! event-last-param)
+(reg-side-effect-fx ::events/set-speed time/set-speed! event-last-param)
 
 ;; simulation events
 (reg-side-effect-fx ::events/start-bird-loop sim-events/actors-loop)
@@ -150,8 +152,7 @@
 (reg-item-append-db ::events/observer-added :observer-ids)
 (reg-item-replace-db ::events/observer-removed :observer-ids)
 
-(reg-side-effect-fx ::events/intitialise-observers-watch
-                    (fn [] (sim-events/attach-listener #(re-frame/dispatch [::events/observer-event %]))))
+(reg-side-effect-fx ::events/intitialise-observers-watch (fn [] (sim-events/attach-listener #(re-frame/dispatch [::events/observer-event %]))))
 
 (re-frame/reg-event-fx
  ::events/add-observer
@@ -182,3 +183,11 @@
  (fn [db [_ event]]
    (when (= (:event-type event) :start-singing)
      (update db :observers inc-hearers event))))
+
+
+(reg-side-effect-fx
+ ::events/download-observer-data
+ (fn [file-type data] (downloader/download-data "events" file-type observers/observations-headers data))
+ (fn [{db :db} [_ id file-type]] [file-type (-> db (get-in [:observers id]) observers/get-observations)]))
+
+(re-frame/reg-event-db ::events/clear-observer-data (fn [db [_ id]] (update-in db [:observers id] observers/clear-observations)))

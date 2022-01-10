@@ -109,5 +109,9 @@
                   :movement-speed 5  ; by how much the observer can move per tick
                   :ignore-after 100  ; stop following a specific bird after this many ticks
                   :should-wander? true
-                  :prob-change-direction 0.05
-                  }))
+                  :prob-change-direction 0.05}))
+
+
+(def observations-headers [:start :end :count])
+(defn get-observations [observer] (prn observer)(:observations observer))
+(defn clear-observations [observer] (assoc observer :observations [{:start (time/now)}]))
