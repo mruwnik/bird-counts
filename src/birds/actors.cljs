@@ -13,6 +13,7 @@
   (q/ellipse (:x pos) (:y pos) (* 2 size) (* 2 size)))
 
 (defprotocol Actor
+  (actor-type [_])
   (move! [_])
   (move-to! [_ x y])
   (move-by! [_ [x y]]))

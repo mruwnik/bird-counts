@@ -8,6 +8,7 @@
                  singing? resinging?
                  bird-colour song-colour hearing-colour]
   actors/Actor
+  (actor-type [_] :bird)
   (move! [_])
   (move-to! [bird x y] (assoc bird :pos {:x x :y y}))
   (move-by! [{{:keys [x y]} :pos :as b} [dx dy]] (assoc b :pos {:x (+ x dx) :y (+ y dy)}))

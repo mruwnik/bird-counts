@@ -1,4 +1,4 @@
-#root {
+#sandbox {
     display: grid;
     grid-gap: 50px;
     grid-template-columns: 80% 19%;
@@ -19,4 +19,9 @@
 .setting-input input {
     width: 60px;
     float: right;
+}
+
+.generator-option .setting-input {
+    display: inline-block;
+    width: 100px;
 }

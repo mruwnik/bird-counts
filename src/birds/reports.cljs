@@ -3,6 +3,7 @@
             [re-frame.core :as re-frame]
             [birds.views.events :as event]
             [birds.views.downloader :as downloader]
+            [birds.converters :as conv]
             [birds.time :as time]))
 
 (defonce raw-events (r/atom []))
@@ -24,17 +25,10 @@
   (re-frame/dispatch [::event/attach-event-listener update-stats])
   (re-frame/dispatch [::event/attach-event-listener add-raw-event]))
 
-(defn event->data-point [event]
-  (-> event
-      (select-keys [:bird-id :tick :event-type :volume :song-length])
-      (assoc :pos-x (-> event :pos :x)
-             :pos-y (-> event :pos :x)
-             :motivated (if (-> event :motivated-singing) 1 0))))
-
 (defn download-raw-events [file-type]
   (downloader/download-data "events" file-type
                  [:bird-id :tick :event-type :pos-x :pos-y :volume :song-length :motivated]
-                 (map event->data-point @raw-events)))
+                 (map conv/event->data-point @raw-events)))
 
 (defn stats []
   [:div

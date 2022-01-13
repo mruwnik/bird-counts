@@ -2,6 +2,7 @@
   (:require [re-frame.core :as re-frame]
             [birds.views.db :as db]
             [birds.actors :as actors]
+            [birds.simulate :as sim]
             [birds.events :as sim-events]
             [birds.reports :as reports]
             [birds.forest :as forest]
@@ -137,12 +138,9 @@
 
 (reg-conditional-db
  ::events/move-actor-by
- (fn [db [_ actor delta]]
-   (when-let [item-key (condp = (str (type actor))
-                    (str observers/Observer) :observers
-                    (str birds/Bird)         :birds
-                    nil)]
-     (update-in db [item-key (:id actor)] actors/move-by! delta))))
+ (fn [db [_ {:keys [id type delta]}]]
+   (when (and type id)
+     (update-in db [type id] actors/move-by! delta))))
 
 ;; Reporters
 (reg-side-effect-fx ::events/initialize-reports reports/init!)
@@ -152,8 +150,6 @@
 (reg-item-dissoc-db ::events/remove-observer :observers ::events/observer-removed)
 (reg-item-append-db ::events/observer-added :observer-ids)
 (reg-item-replace-db ::events/observer-removed :observer-ids)
-
-(reg-side-effect-fx ::events/intitialise-observers-watch (fn [] (sim-events/attach-listener #(re-frame/dispatch [::events/observer-event %]))))
 
 (re-frame/reg-event-fx
  ::events/add-observer
@@ -180,22 +176,59 @@
  (fn [db [_ observer-id _ listen?]]
    (update-in db [:observers observer-id] (if listen? actors/start-listening actors/stop-listening))))
 
-(defn inc-hearers [observers event]
-  (->> observers
-       vals
-       (filter #(actors/hears? % event))
-       (reduce #(update %1 (:id %2) actors/notice event) observers)))
-
-(reg-conditional-db
- ::events/observer-event
- (fn [db [_ event]]
-   (when (= (:event-type event) :start-singing)
-     (update db :observers inc-hearers event))))
-
-
 (reg-side-effect-fx
  ::events/download-observer-data
  (fn [file-type data] (downloader/download-data "events" file-type observers/observations-headers data))
  (fn [{db :db} [_ id file-type]] [file-type (-> db (get-in [:observers id]) observers/get-observations)]))
 
 (re-frame/reg-event-db ::events/clear-observer-data (fn [db [_ id]] (update-in db [:observers id] observers/clear-observations)))
+
+;; Simulations
+
+(defn values-range [[from to steps]]
+  (if (or (= from to) (<= steps 1))
+    [from]
+    (for [i (range steps)] (+ from (* i (/ (- to from) (dec steps)))))))
+
+(defn blowup [items key values]
+  (cond
+    (and (seq items) (seq values))
+    (for [item items value values] (assoc item key value))
+
+    (seq values)
+    (for [value values] {key value})
+
+    (seq items) items))
+
+(re-frame/reg-event-fx
+ ::events/start-simulations
+ (fn [{db :db} [_ {:keys [times ticks variables]}]]
+   (let [base-settings (-> db
+                           (select-keys [:width :height
+                                         :num-of-birds :volume :spontaneous-sing-prob
+                                         :motivated-sing-prob :motivated-sing-after
+                                         :sing-rest-time :song-length :audio-sensitivity])
+                           (assoc :times times :ticks ticks))]
+     (when (seq variables)
+       {:db (dissoc db :simulation-runs)
+        :dispatch (->> variables
+                       (reduce-kv #(assoc %1 %2 (values-range %3)) {})
+                       (reduce-kv blowup [base-settings])
+                       (conj [::events/run-single-simulation (:observers db)]))}))))
+
+(reg-event-db-notifications
+ ::events/run-single-simulation
+ (fn [event _ [_ & to-run]] (when to-run [event]))
+ (fn [[event observers [_ & to-run]]] [event observers to-run])
+ (fn [db [_ observers [{:keys [times ticks] :as settings} & _]]]
+   (update db :simulation-runs concat
+           (for [i (range times)]
+             (-> (birds/update-birds-count {} settings)
+                 (sim/simulate-n-ticks observers ticks)
+                 (assoc :settings settings :run i))))))
+
+
+(reg-side-effect-fx
+ ::events/download-simulation-runs
+ (fn [file-type data] (downloader/download-data "events" file-type [] data))
+ (fn [{db :db} [_ file-type]] [file-type (-> db :simulation-runs)]))

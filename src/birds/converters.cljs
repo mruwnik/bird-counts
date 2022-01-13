@@ -29,3 +29,12 @@
   (reduce-kv #(assoc %1 %2 ((parsers %2) %3))
              defaults
              (select-keys to-parse (keys parsers))))
+
+(defn event->data-point [event]
+  (-> event
+      (select-keys [:bird-id :tick :event-type :volume :song-length])
+      (assoc :pos-x (-> event :pos :x)
+             :pos-y (-> event :pos :x)
+             :motivated (if (-> event :motivated-singing) 1 0))))
+
+(defn seq->id-map [items] (reduce #(assoc %1 (:id %2) %2) {} items))

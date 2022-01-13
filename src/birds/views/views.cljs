@@ -3,7 +3,8 @@
             [birds.views.subs :as subs]
             [birds.views.html :as html]
             [birds.views.events :as event]
-            [birds.reports :as reports]))
+            [birds.reports :as reports]
+            [birds.views.generator :as generator]))
 
 (defn observer-val [id key] @(re-frame/subscribe [::subs/observer-value id key]))
 
@@ -88,10 +89,15 @@
     (doall (map observer-controls @(re-frame/subscribe [::subs/observer-ids])))]
    [:button {:on-click #(re-frame/dispatch [::event/add-observer])} "Add new observer"]])
 
-(defn render-view []
-  [:div
+(defn render-gui []
+  [:div {:id :controls :class :grid-item}
    [gui]
    [:hr]
    [observers-block]
    [:hr]
    (reports/show)])
+
+(defn render-view []
+  [:div
+   [:div {:id :sandbox} [:div {:id :forest :class :grid-item}] [render-gui]]
+   [generator/view]])

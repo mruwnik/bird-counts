@@ -3,16 +3,21 @@
 
 (defn num-input
   [class desc value dispatcher parser params]
-  [:div {:class [:setting-input class]}
-   desc
-   [:input (assoc params
-                  :type "number"
-                  :value value
-                  :on-change #(-> % .-target .-value parser dispatcher))]])
+  (let [id (gensym)]
+    [:div {:class [:setting-input class] :id id}
+     [:label {:for id} desc]
+      [:input (assoc params
+                     :type "number"
+                     :value value
+                     :on-change #(-> % .-target .-value parser dispatcher))]]))
 
 (defn int-input
   [class desc value dispatcher]
   (num-input class desc value dispatcher parse-int {}))
+
+(defn pos-int-input
+  [class desc value dispatcher]
+  (num-input class desc value dispatcher parse-int {:min "0"}))
 
 (defn float-input
   [class desc value dispatcher]

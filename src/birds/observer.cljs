@@ -46,6 +46,7 @@
                      observing observations
                      hearing-colour observer-colour]
   actors/Actor
+  (actor-type [_] :observer)
   (move! [{:keys [strategy id] :as o}]
     (let [delta (case strategy
                   :no-movement    nil
@@ -53,7 +54,7 @@
                   :wander         (wander o)
                   nil)]
       (when delta
-        {:id id :delta delta})))
+        {:id id :delta delta :type :observers})))
   (move-to! [o x y] (assoc o :pos {:x x :y y}))
   (move-by! [{{:keys [x y]} :pos :as o} [dx dy]] (assoc o :pos {:x (+ x dx) :y (+ y dy)}))
 
@@ -121,6 +122,9 @@
    :observer-should-wander?        conv/parse-bool
    :observer-prob-change-direction conv/parse-float})
 
+(defn make-n-observers [settings n]
+  (for [_ (range n)] (new-observer settings)))
+
 (defn make-observers [settings params]
   (when (:observers params)
     (for [_ (-> params :observers conv/parse-int range)]
@@ -130,5 +134,5 @@
            (merge (new-observer settings))))))
 
 (def observations-headers [:start :end :count])
-(defn get-observations [observer] (prn observer)(:observations observer))
+(defn get-observations [observer] (:observations observer))
 (defn clear-observations [observer] (assoc observer :observations [{:start (time/now)}]))
