@@ -1,9 +1,12 @@
 (ns birds.views.views
   (:require [re-frame.core :as re-frame]
+            [reagent.core :as r]
+            [reagent.dom :as rdom]
             [birds.views.subs :as subs]
             [birds.views.html :as html]
             [birds.views.events :as event]
             [birds.reports :as reports]
+            [birds.forest :as forest]
             [birds.views.generator :as generator]))
 
 (defn observer-val [id key] @(re-frame/subscribe [::subs/observer-value id key]))
@@ -90,14 +93,45 @@
    [:button {:on-click #(re-frame/dispatch [::event/add-observer])} "Add new observer"]])
 
 (defn render-gui []
-  [:div {:id :controls :class :grid-item}
+  [:div {:id :controls :class [:controls :grid-item]}
    [gui]
    [:hr]
    [observers-block]
    [:hr]
    (reports/show)])
 
+(defn render-forest []
+  (r/create-class
+   {:component-did-mount
+    (fn [component]
+      (let [settings (merge {:width (* 0.8 (.-innerWidth js/window))
+                             :height (.-innerHeight js/window)}
+                            @(re-frame/subscribe [::subs/forest-settings]))]
+        (forest/start-rendering (rdom/dom-node component) settings)))
+    :render
+    (fn [] [:div {:id :forest :class :grid-item}])}))
+
+(defn render-sandbox []
+  [:div {:class :sandbox-container}
+   [render-forest]
+   [render-gui]])
+
+(defn tabbed-windows [tabs]
+  (let [selected-tab @(re-frame/subscribe [::subs/selected-tab])]
+    [:div {:class :window}
+     [:div {:class :tab-headers}
+      (for [[id _] tabs]
+        [:span {:class (conj (when (= selected-tab id) [:selected]) :tab-header)
+                :id id :key (gensym)
+                :on-click #(re-frame/dispatch [::event/select-tab id])}
+         id])]
+     [:div {:class :tabs}
+      (for [[id tab] tabs]
+        [:div {:class (conj (when (= selected-tab id) [:selected]) :tab)
+               :id id :key (gensym)}
+         [tab]])]]))
+
 (defn render-view []
-  [:div
-   [:div {:id :sandbox} [:div {:id :forest :class :grid-item}] [render-gui]]
-   [generator/view]])
+  (tabbed-windows
+   [[:sandbox render-sandbox]
+    [:simulator generator/view]]))

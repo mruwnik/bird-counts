@@ -81,9 +81,9 @@
     (swap! (:state bird) assoc key (key settings))))
 
 
-(defn start-rendering [settings]
-  (q/defsketch birds
-    :host (:container-name settings)
+(defn start-rendering [node settings]
+  (q/sketch
+    :host node
     :size [(:width settings) (:height settings)]
     ;; setup function called only once, during sketch initialization.
     :setup #(setup settings)

@@ -19,5 +19,4 @@
   (re-frame/dispatch-sync [::events/initialize-reports])
   (re-frame/dispatch-sync [::events/start-bird-loop])
   (re-frame/dispatch-sync [::events/generate-birds])
-  (re-frame/dispatch-sync [::events/generate-observers (conv/parse-url-params)])
-  (re-frame/dispatch-sync [::events/start-render-forest]))
+  (re-frame/dispatch-sync [::events/generate-observers (conv/parse-url-params)]))

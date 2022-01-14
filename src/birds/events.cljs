@@ -22,15 +22,19 @@
     (fun event))
   events)
 
+(defn run-tick [events]
+  (time/tick!)
+  (let [updates (sim/run-tick! @(re-frame/subscribe [::subs/observers])
+                               @(re-frame/subscribe [::subs/birds])
+                               events)]
+    (doseq [bird (:updated-birds updates)] (replace-bird bird))
+    (doseq [observer (:observers-spotted updates)] (dispatch-observer-update observer))
+    (doseq [item (:moved updates)] (dispatch-move item))
+    (run-listeners (:events updates))
+    (:events updates)))
+
 (defn actors-loop []
   (async/go-loop [events nil]
     (async/alts! [(async/timeout (time/next-tick-in))])
-    (time/tick!)
-    (let [updates (sim/run-tick! @(re-frame/subscribe [::subs/observers])
-                                 @(re-frame/subscribe [::subs/birds])
-                                 events)]
-      (doseq [bird (:updated-birds updates)] (replace-bird bird))
-      (doseq [observer (:observers-spotted updates)] (dispatch-observer-update observer))
-      (doseq [item (:moved updates)] (dispatch-move item))
-      (run-listeners (:events updates))
-      (recur (:events updates)))))
+    (recur (if (= @(re-frame/subscribe [::subs/selected-tab]) :sandbox)
+             (run-tick events) events))))

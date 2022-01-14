@@ -130,11 +130,10 @@
 ;; Simulation controls
 (reg-side-effect-fx ::events/set-tick-length time/set-tick-length! event-last-param)
 (reg-side-effect-fx ::events/set-speed time/set-speed! event-last-param)
+(reg-item-assoc-db ::events/select-tab :selected-tab)
 
 ;; simulation events
 (reg-side-effect-fx ::events/start-bird-loop sim-events/actors-loop)
-
-(reg-side-effect-db ::events/start-render-forest forest/start-rendering)
 
 (reg-conditional-db
  ::events/move-actor-by
@@ -184,6 +183,13 @@
 (re-frame/reg-event-db ::events/clear-observer-data (fn [db [_ id]] (update-in db [:observers id] observers/clear-observations)))
 
 ;; Simulations
+(re-frame/reg-event-db
+ ::events/simulation-variable-dissoc
+ (fn [db [_ key]] (update-in db [:simulation-options :variables] dissoc key)))
+
+(re-frame/reg-event-db
+ ::events/simulation-option-update
+ (fn [db [_ path val]] (assoc-in db (concat [:simulation-options] path) val)))
 
 (defn values-range [[from to steps]]
   (if (or (= from to) (<= steps 1))
@@ -202,8 +208,9 @@
 
 (re-frame/reg-event-fx
  ::events/start-simulations
- (fn [{db :db} [_ {:keys [times ticks variables]}]]
-   (let [base-settings (-> db
+ (fn [{db :db} _]
+   (let [{:keys [times ticks variables]} (:simulation-options db)
+         base-settings (-> db
                            (select-keys [:width :height
                                          :num-of-birds :volume :spontaneous-sing-prob
                                          :motivated-sing-prob :motivated-sing-after
@@ -211,10 +218,11 @@
                            (assoc :times times :ticks ticks))]
      (when (seq variables)
        {:db (dissoc db :simulation-runs)
-        :dispatch (->> variables
-                       (reduce-kv #(assoc %1 %2 (values-range %3)) {})
-                       (reduce-kv blowup [base-settings])
-                       (conj [::events/run-single-simulation (:observers db)]))}))))
+        :dispatch-later (->> variables
+                             (reduce-kv #(assoc %1 %2 (values-range %3)) {})
+                             (reduce-kv blowup [base-settings])
+                             (conj [::events/run-single-simulation (:observers db)])
+                             (assoc {:ms 400} :dispatch ))}))))
 
 (reg-event-db-notifications
  ::events/run-single-simulation
@@ -225,10 +233,12 @@
            (for [i (range times)]
              (-> (birds/update-birds-count {} settings)
                  (sim/simulate-n-ticks observers ticks)
-                 (assoc :settings settings :run i))))))
-
+                 (merge settings)
+                 (assoc :run (inc i)))))))
 
 (reg-side-effect-fx
  ::events/download-simulation-runs
- (fn [file-type data] (downloader/download-data "events" file-type [] data))
- (fn [{db :db} [_ file-type]] [file-type (-> db :simulation-runs)]))
+ (fn [file-type columns data] (prn data)(downloader/download-data "events" file-type columns data))
+ (fn [{db :db} [_ file-type]] [file-type
+                              (-> db :simulation-options :variables keys (conj :run :songs :motivated))
+                              (-> db :simulation-runs)]))

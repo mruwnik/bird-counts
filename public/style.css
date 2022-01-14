@@ -1,15 +1,17 @@
-#sandbox {
+.sandbox-container {
     display: grid;
     grid-gap: 50px;
-    grid-template-columns: 80% 19%;
+    grid-template-columns: 79% 18%;
     /* background-color: #2196F3; */
-    padding: 10px;
 }
 
 .grid-item {
     /* background-color: rgba(255, 255, 255, 0.8); */
-    border: 1px solid rgba(0, 0, 0, 0.8);
-    padding: 20px;
+    padding-right: 20px;
+}
+
+.controls {
+    border-left: 1px solid rgba(0, 0, 0, 0.8);
 }
 
 .setting-input {
@@ -24,4 +26,32 @@
 .generator-option .setting-input {
     display: inline-block;
     width: 100px;
+}
+
+.simulation-length {
+    width: 400px;
+}
+
+.simulation table, th, td {
+    border:1px solid black;
+}
+
+.tab-headers {
+    margin: 1px;
+}
+.tab-headers .tab-header {
+    border: 1px solid black;
+    padding: 10px;
+}
+.tab-header.selected {
+    background-color: AliceBlue;
+}
+
+.tab {
+    margin: 10px 0;
+    border: 2px solid blue;
+    display: none;
+}
+.tab.selected {
+    display: inherit;
 }

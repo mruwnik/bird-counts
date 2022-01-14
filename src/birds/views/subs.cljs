@@ -9,10 +9,9 @@
 (re-frame/reg-sub ::observer-ids (fn [db] (->> db :observer-ids)))
 (re-frame/reg-sub ::observer-strategies (fn [db] (-> db :observer-strategies)))
 
-(re-frame/reg-sub ::bird-settings (fn [db] (select-keys db [:width :height
-                                                           :num-of-birds :volume :spontaneous-sing-prob
-                                                           :motivated-sing-prob :motivated-sing-after
-                                                           :sing-rest-time :song-length :audio-sensitivity])))
+(def bird-settings [:width :height :num-of-birds :volume :spontaneous-sing-prob
+                    :motivated-sing-prob :motivated-sing-after :sing-rest-time :song-length :audio-sensitivity])
+(re-frame/reg-sub ::bird-settings (fn [db] (select-keys db bird-settings)))
 
 (re-frame/reg-sub ::num-of-birds (fn [db] (:num-of-birds db)))
 (re-frame/reg-sub ::volume (fn [db] (:volume db)))
@@ -36,3 +35,10 @@
 (re-frame/reg-sub ::resting-colour (fn [db] (:resting-colour db)))
 
 (re-frame/reg-sub ::simulation-runs (fn [db] (:simulation-runs db)))
+(re-frame/reg-sub ::simulation-variables (fn [db] (-> db :simulation-options :variables keys)))
+(re-frame/reg-sub ::simulation-available-variables (fn [db] (-> db :simulation-options :variables
+                                                               keys (concat [:width :height])
+                                                               set (remove bird-settings))))
+(re-frame/reg-sub ::simulation-option (fn [db [_ path]] (get-in db (concat [:simulation-options] path))))
+(re-frame/reg-sub ::selected-tab (fn [db] (or (:selected-tab db) :sandbox)))
+(re-frame/reg-sub ::forest-settings (fn [db] (select-keys db [:width :height :container-name])))

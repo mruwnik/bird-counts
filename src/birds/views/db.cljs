@@ -29,6 +29,8 @@
    :tick-length [100 conv/parse-int]})
 
 (defn parsers [] (reduce-kv #(assoc %1 %2 (second %3)) {} default-db))
-(defn default-vals [] (reduce-kv #(assoc %1 %2 (first %3)) {} default-db))
+(defn default-vals [] (reduce-kv #(assoc %1 %2 (first %3))
+                                 {:simulation-options {:ticks 1000 :times 1}}
+                                 default-db))
 
 (defn load-db [] (conv/parse-values (parsers) (default-vals) (conv/parse-url-params)))
