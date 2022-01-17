@@ -51,6 +51,7 @@
 
 (defn results []
   [:table {:class :results}
+   [:thead
     [:tr {:class :result-header :key (gensym)}
      (for [dimension @(re-frame/subscribe [::subs/simulation-variables])]
        [:th {:class [dimension :dimension] :key (gensym)} (name dimension)])
@@ -60,20 +61,20 @@
      [:th {:class [:songs :metric] :key (gensym)} "total songs"]
      [:th {:class [:motivated :metric] :key (gensym)} "total motivated"]
      (for [id (-> @(re-frame/subscribe [::subs/simulation-runs]) first :observer-counts sort keys)]
-       [:th {:class [(str "observer-" id) :metric] :key (gensym)} (str "observer no " id)])]
+       [:th {:class [(str "observer-" id) :metric] :key (gensym)} (str "observer no " id)])]]
 
-   (doall
-    (for [result @(re-frame/subscribe [::subs/simulation-runs])]
-      [:tr {:class :result-row :key (gensym)}
-       (for [dimension @(re-frame/subscribe [::subs/simulation-variables])]
-         [:td {:class [dimension :dimension] :key (gensym)} (dimension result)])
+   (into [:tbody]
+     (for [result @(re-frame/subscribe [::subs/simulation-runs])]
+       [:tr {:class :result-row :key (gensym)}
+        (for [dimension @(re-frame/subscribe [::subs/simulation-variables])]
+          [:td {:class [dimension :dimension] :key (gensym)} (dimension result)])
 
-       [:td {:class [:runs :dimension] :key (gensym)} (:run result)]
+        [:td {:class [:runs :dimension] :key (gensym)} (:run result)]
 
-       [:td {:class [:songs :metric] :key (gensym)} (:songs result)]
-       [:td {:class [:motivated :metric] :key (gensym)} (:motivated result)]
-       (for [[id counts] (-> result :observer-counts sort)]
-         [:td {:class [(str "observer-" id) :metric] :key (gensym)} counts])]))])
+        [:td {:class [:songs :metric] :key (gensym)} (:songs result)]
+        [:td {:class [:motivated :metric] :key (gensym)} (:motivated result)]
+        (for [[id counts] (-> result :observer-counts sort)]
+          [:td {:class [(str "observer-" id) :metric] :key (gensym)} counts])]))])
 
 (defn view []
   [:div {:class :simulator :id :simulator}

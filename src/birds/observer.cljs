@@ -88,7 +88,7 @@
     (when observing
       (actors/draw-circle! pos audio-sensitivity (or hearing-colour [100 100 100]))))
   (draw-actor! [{:keys [pos actor-radius observer-colour]}]
-    (actors/draw-circle! pos actor-radius (or observer-colour [0 50 100]))))
+    (actors/draw-dot! pos actor-radius (or observer-colour [0 50 100]))))
 
 (def ids (atom 0))
 (defn make-id [] (swap! ids inc))

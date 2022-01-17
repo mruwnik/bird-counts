@@ -7,10 +7,13 @@
 
 (defn delta [p1 p2] [(- (:x p2) (:x p1)) (- (:y p2) (:y p1))])
 
-(defn draw-circle! [pos size colour]
+(defn draw-dot! [pos size colour]
   (apply q/fill colour)
   (q/no-stroke)
   (q/ellipse (:x pos) (:y pos) (* 2 size) (* 2 size)))
+
+(defn draw-circle! [pos size colour]
+  (draw-dot! pos size colour))
 
 (defprotocol Actor
   (actor-type [_])

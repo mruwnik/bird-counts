@@ -46,7 +46,7 @@
                              (:hearing-colour bird)
                              [255 0 0])))
   (draw-actor! [{:keys [bird-colour pos actor-radius]}]
-    (actors/draw-circle! pos actor-radius (or bird-colour [0 0 0]))))
+    (actors/draw-dot! pos actor-radius (or bird-colour [0 0 0]))))
 
 (defn add-random-bird [settings id]
   (-> settings
