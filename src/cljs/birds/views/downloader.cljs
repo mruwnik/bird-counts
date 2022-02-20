@@ -11,7 +11,7 @@
   (->> data
        (map (partial csv-row headers))
        (concat [(->> headers (map name) (str/join ","))])
-       (str/join "\n")
+       (str/join "\r\n")
        vector))
 
 (defn create-download-data [type headers data]

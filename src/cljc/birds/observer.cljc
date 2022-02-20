@@ -94,24 +94,27 @@
 (defn make-id [] (swap! ids inc))
 
 (defn new-observer [settings]
-  (map->Observer {:id (make-id)
-                  :observing true
-                  :observations [{:start (time/now) :count 0}]
-                  :audio-sensitivity 100
-                  :hearing-colour [100 100 100]
-                  :observer-colour [0 50 100]
-                  :pos {:x (rand-int (:width settings))
-                        :y (rand-int (:height settings))}
+  (map->Observer {:id               (:id settings (make-id))
+                  :observing        (:observing settings true)
+
+                  :pos (:pos settings {:x (rand-int (:width settings))
+                                       :y (rand-int (:height settings))})
                   :patch-size (select-keys settings [:width :height])
-                  :actor-radius 10
 
-                  :strategy :no-movement
                   :local-state (atom {})
+                  :observations [{:start (time/now) :count 0}]
 
-                  :movement-speed 5  ; by how much the observer can move per tick
-                  :ignore-after 100  ; stop following a specific bird after this many ticks
-                  :should-wander? true
-                  :prob-change-direction 0.05}))
+                  :audio-sensitivity (:audio-sensitivity settings 100)
+                  :actor-radius      (:actor-radius settings 10)
+                  :hearing-colour    (:hearing-colour settings [100 100 100])
+                  :observer-colour   (:observer-colour settings [0 50 100])
+
+                  :strategy (:strategy settings :no-movement)
+
+                  :movement-speed (:movement-speed settings 5)  ; by how much the observer can move per tick
+                  :ignore-after   (:ignore-after settings 100)  ; stop following a specific bird after this many ticks
+                  :should-wander? (:should-wander? settings true)
+                  :prob-change-direction (:prob-change-direction settings 0.05)}))
 
 (def param-parsers
   {:observer-strategy       keyword
@@ -125,7 +128,7 @@
 (defn make-n-observers [settings n]
   (for [_ (range n)] (new-observer settings)))
 
-(defn make-observers [settings params]
+(defn make-observers-from-params [settings params]
   (when (:observers params)
     (for [_ (-> params :observers conv/parse-int range)]
       (->> params

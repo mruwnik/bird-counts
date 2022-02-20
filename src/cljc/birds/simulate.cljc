@@ -1,7 +1,6 @@
 (ns birds.simulate
   (:require [birds.actors :as actors]
-            [birds.time :as time]
-            [birds.converters :as conv]))
+            [birds.time :as time]))
 
 (defn rand-happens? [prob] (< (rand 1) prob))
 (defn same-bird? [bird event] (= (:id bird) (:bird-id event)))
@@ -94,14 +93,15 @@
      :events (map #(dissoc % :bird) events)}))
 
 ;; Run simulations
+(defn safe-add [& args] (->> args (remove nil?) (apply +)))
 
 (defn update-stats [stats events]
   (let [songs (filter (comp #{:start-singing} :event-type) events)
         motivated (filter :motivated-singing songs)]
     (when (seq songs) songs)
     (-> stats
-        (update :songs + (count songs))
-        (update :motivated + (count motivated)))))
+        (update :songs safe-add (count songs))
+        (update :motivated safe-add (count motivated)))))
 
 (defn reduce-with [acc fun items] (reduce fun acc items))
 (defn merge-events [actors {:keys [updated-birds observers-spotted moved]}]
@@ -127,3 +127,23 @@
       (->> observers
            (reduce-kv #(assoc %1 %2 (->> %3 :observations (map :count) (reduce +))) {})
            (assoc stats :observer-counts)))))
+
+
+;; simulation helpers
+
+(defn values-range [[from to steps]]
+  (if (or (= from to) (<= steps 1))
+    [from]
+    (for [i (range steps)] (+ from (* i (/ (- to from) (dec steps)))))))
+
+(defn blowup [items key values]
+  (cond
+    (and (seq items) (seq values))
+    (for [item items value values] (assoc item key value))
+
+    (seq values)
+    (for [value values] {key value})
+
+    (seq items) items))
+
+(blowup nil :as [1 2 3 4])

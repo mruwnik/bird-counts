@@ -60,3 +60,7 @@ Simulations can be configured either via the web GUI, or by passing in appropria
  * frame-rate  - 30  - Render frame rate - this is just for presentation and has no effect on the actual simulation
  * speed       - 10  - Speed factor, i.e. by how many times to speed up the simulation
  * tick-length - 100 - How many ms per a single simulation tick
+
+## Standalone uberjar
+
+Run `clojure -T:build org.corfield.build/uber :lib birds :main birds.core` to compile the uberjar, `java -jar target/birds-standalone.jar` to execute it.

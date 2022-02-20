@@ -1,0 +1,86 @@
+{;; The width and height of the simulated area. The unit isn't important - assume meters if that makes things easier. The idea is that there is a 2D grid in which the simulated birds can be found.
+ :width 1000
+ :height 1000
+
+ ;; How many tick to simulate. This is unitless, or rather the same unit should be assumed for all time specific items. During a single tick, each bird can do at most one action. The simulation works by checking each bird to see whether they are doing anything, updating the world state with whatever happened during this round, and then doing the same. In psuedocode this would be something like:
+ ;;
+ ;; bird_states = {bird_id: bird_state for each bird in all_birds}
+ ;; bird_counts = {bird_id: {sung: 0, motivated: 0}}
+ ;;
+ ;; For round in range(ticks):
+ ;;     For each bird in all_birds:
+ ;;         if bird starts to sing:
+ ;;             bird_counts[bird].sung += 1
+ ;;             bird_states[bird] = :start-singing
+ ;;         elif bird singing and song length > max song length:
+ ;;             bird_state[bird] = :stop-singing
+ ;;         elif bird hears other bird and will resing:
+ ;;             bird_counts[bird].sung += 1
+ ;;             bird_counts[bird].motivated += 1
+ ;;             bird_state[bird] = :start-singing
+ ;;
+ :ticks 10000
+
+ ;; ############
+ ;; This setting is the main magic component. It allows overriding various variables by setting ranges of values to be used. Each possible variable combination will be simulated `:times` times. It is expected that a list of values will be provided for each parameter, but there are a few helper functions that can be used to generate lists of values:
+ ;;
+ ;; * `#birds/param-range [from to steps]`  - will divide the span between `from` and `to` into `step` values and return them.
+ ;; * `#birds/range [start end step]`         - will return values from `start` to `end` going every `step`
+
+ :variables {:num-of-birds #birds/param-range [10 20 2]
+             :volume       #birds/range [1 10 5]
+             :song-length [20 35 100]}
+
+ ;; How many times each variable combination should be run.
+ :times 5
+
+ ;; ###########
+ ;; Whether to print out the parameters and results for each combination
+ :log true
+
+ ;; The number of birds to simulate - the will be randomly generated before each simulation run
+ :num-of-birds   10
+
+ ;; ##############
+ ;; Song power parameters. These are also unit less, the idea is that this represents an objective measure of the power of each birds song. This could probably be handled with a single parameter, rather than have one for the song power and one for the bird sensitivity - to act as if there is only one parameter, just set `:volume` and `:audio-sensitivity` to the same value. This would be of more use if bird volume and sensitivity were drawn from a distribution, rather than them all having the same value. A different way of looking at this is that the volume and sensitivity are from the perspective of a researcher investigating the birds - e.g. `:volume = 20` and `:sensitivity = 400` would describe a bird that sings very quietly, but has excellent hearing.
+
+ ;; The song radius of each bird
+ :volume         150
+ ;; The sensitivity radius of each bird - i.e. a bird will hear any songs which have intersect with the hearing cirle. Or more precisely - if the distance between the singer and the listener is smaller than the sum of the volume of the singer and the sensitivity of the listener, the song is heard. Otherwise the song isn't heard by the listener.
+ :audio-sensitivity     150
+
+ ;; #############
+ ;; These 2 parameters define the frequency of singing. Each tick, for every bird that can sing (i.e. isn't already singing or isn't resting), a random number is chosen between <0, 1>. If the number is smaller than the value of `:spontaneous-sing-prob` the bird will start singing. The same mechanism works for motivated singing, with the obvious caveat that the bird first has to hear a different bird singing. Motivated singing is only tried once in the turn that the bird hears a different bird start singing (i.e. it didn't hear that bird singing in the previous turn).
+ :spontaneous-sing-prob 0.01
+ :motivated-sing-prob   0.9
+
+ ;; ############
+ ;; Duration parameters. These parameters define how long various things will last. The units are ticks, which can mean whatever is desired. For example a tick duration of 1 second and `:ticks = 3600` will simulate an hour
+
+ ;; How long a bird will wait to reply to a song. During this time the bird is "preparing" to start singing - after these many ticks it will start singing as motivated singing. During this time the bird can also decide to spontaneously sing as well - both are possibilities.
+ :motivated-sing-after  30
+
+ ;; How long a bird will rest between songs. During this period the bird will neither sing spontaneously, nor will it react to other birds - think of it as foraging or something.
+ :sing-rest-time        100
+
+ ;; How long will each bird song last
+ :song-length           20
+
+ ;; ###########
+ ;; Observers are simulated researchers counting birds. They have counting strategies that control how they act, have an audio-sensitivity controlling how far they hear etc.
+ ;; :observers [{:id 1
+ ;;              :observing true
+ ;;              :audio-sensitivity 100
+ ;;              :pos {:x 123
+ ;;                    :y 432}
+ ;;              :actor-radius 12
+
+ ;;              ;; One of [:no-movement :follow-singing :wander]
+ ;;              :strategy :no-movement
+
+ ;;              :movement-speed 5  ; by how much the observer can move per tick
+ ;;              :ignore-after 100  ; stop following a specific bird after this many ticks
+ ;;              :should-wander? true
+ ;;              :prob-change-direction 0.05}]
+
+ }

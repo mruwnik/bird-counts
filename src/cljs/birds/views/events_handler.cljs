@@ -1,11 +1,11 @@
 (ns birds.views.events-handler
   (:require [re-frame.core :as re-frame]
-            [birds.views.db :as db]
+            [birds.db :as db]
             [birds.actors :as actors]
+            [birds.converters :as conv]
             [birds.simulate :as sim]
             [birds.events :as sim-events]
             [birds.reports :as reports]
-            [birds.forest :as forest]
             [birds.observer :as observers]
             [birds.bird :as birds]
             [birds.time :as time]
@@ -92,7 +92,7 @@
 (re-frame/reg-event-db
  ::events/initialize-db
  (fn [_ _]
-   (let [db (db/load-db)]
+   (let [db (db/load-db (conv/parse-url-params))]
      (-> db :speed time/set-speed!)
      (-> db :tick-length time/set-tick-length!)
      db)))
@@ -160,7 +160,7 @@
 (re-frame/reg-event-fx
  ::events/generate-observers
  (fn [{db :db} [_ params]]
-   (when-let [obs (observers/make-observers db params)]
+   (when-let [obs (observers/make-observers-from-params db params)]
      {:db (assoc db :observers (reduce #(assoc %1 (:id %2) %2) {} obs))
       :fx (for [o obs] [:dispatch [::events/observer-added (:id o)]])})))
 
@@ -191,21 +191,6 @@
  ::events/simulation-option-update
  (fn [db [_ path val]] (assoc-in db (concat [:simulation-options] path) val)))
 
-(defn values-range [[from to steps]]
-  (if (or (= from to) (<= steps 1))
-    [from]
-    (for [i (range steps)] (+ from (* i (/ (- to from) (dec steps)))))))
-
-(defn blowup [items key values]
-  (cond
-    (and (seq items) (seq values))
-    (for [item items value values] (assoc item key value))
-
-    (seq values)
-    (for [value values] {key value})
-
-    (seq items) items))
-
 (re-frame/reg-event-fx
  ::events/start-simulations
  (fn [{db :db} _]
@@ -219,8 +204,8 @@
      (when (seq variables)
        {:db (dissoc db :simulation-runs)
         :dispatch-later (->> variables
-                             (reduce-kv #(assoc %1 %2 (values-range %3)) {})
-                             (reduce-kv blowup [base-settings])
+                             (reduce-kv #(assoc %1 %2 (sim/values-range %3)) {})
+                             (reduce-kv sim/blowup [base-settings])
                              (conj [::events/run-single-simulation (:observers db)])
                              (assoc {:ms 400} :dispatch ))}))))
 

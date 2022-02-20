@@ -1,5 +1,5 @@
 (ns birds.actors
-  (:require [quil.core :as q]))
+  #?(:cljs (:require [quil.core :as q])))
 
 (defn dist-2d [p1 p2]
   (Math/sqrt (+ (Math/pow (- (:x p1) (:x p2)) 2)
@@ -8,9 +8,11 @@
 (defn delta [p1 p2] [(- (:x p2) (:x p1)) (- (:y p2) (:y p1))])
 
 (defn draw-dot! [pos size colour]
-  (apply q/fill colour)
-  (q/no-stroke)
-  (q/ellipse (:x pos) (:y pos) (* 2 size) (* 2 size)))
+  #?(:cljs
+     (do
+       (apply q/fill colour)
+       (q/no-stroke)
+       (q/ellipse (:x pos) (:y pos) (* 2 size) (* 2 size)))))
 
 (defn draw-circle! [pos size colour]
   (draw-dot! pos size colour))

@@ -1,5 +1,5 @@
 {:source-paths
- ["src"
+ ["src/cljc" "src/cljs"
   "test"]
 
  :dependencies [[quil "3.1.0"]
