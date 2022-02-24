@@ -131,7 +131,22 @@
                :id id :key (gensym)}
          [tab]])]]))
 
+(defn offline []
+  [:div
+   [:h2 "Java standalone program"]
+   [:div
+    "To run locally, download "
+    [:a {:href "/birds/birds.zip"} "this"] " zip file. Inside is a standalone jar file that can be executed to run the program locally. The obvious benefits of this is that it will be run naively on multiple threads. There is a config file in the zip archive with instructions on how parameters can be changed."]
+   [:div "The program is executed by running:" [:br] [:code "java -jar birds-standalone.jar -c config.edn output.csv"]]
+   [:div "This will result in an " [:code "output.csv"] " file containing the simulation results. This file is updated in real time, so the simulation can be killed at any time without data loss.J"]
+
+   [:h2 "R package"]
+   [:div "The simulation can also be run as an R package, which can be found " [:a {:href "/birds/birdsSimulator_0.1.0.tar.gz"} "here"] "."]
+   [:div "Once the package has been installed, use " [:code "vignette(\"introduction\", package='birdsSimulator')"] " to view the documentation for details on how to run simulations."]
+   [:div "Or just run " [:code "library('birdsSimulator'); simulate(list(\"num-of-birds\" = c(10)));"]]])
+
 (defn render-view []
   (tabbed-windows
    [[:sandbox render-sandbox]
-    [:simulator generator/view]]))
+    [:simulator generator/view]
+    [:offline offline]]))
